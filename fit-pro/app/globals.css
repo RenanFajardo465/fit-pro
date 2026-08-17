@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/*
+ * Fit-Pro é predominantemente dark mode (Fase 0, item 73/22). Não há troca
+ * light/dark no MVP — o tema é fixo, mas a variante `dark:` do Tailwind v4
+ * fica disponível (baseada na classe `.dark` no <html>) para o dia em que
+ * quisermos oferecer um tema claro sem reescrever nada.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #0b0b0d;
+  --foreground: #f5f5f6;
+  --card: #17171a;
+  --border: #27272b;
+  --primary: #f4c542; /* amarelo/dourado — energia, alto contraste em dark mode */
+  --primary-foreground: #17130a;
+  --secondary: #202024;
+  --secondary-foreground: #f5f5f6;
+  --muted-foreground: #9a9aa2;
+  --destructive: #e5484d;
+  --destructive-foreground: #f5f5f6;
+  --ring: #f4c542;
+}
+
+.dark {
+  --background: #0b0b0d;
+  --foreground: #f5f5f6;
+  --card: #17171a;
+  --border: #27272b;
+  --primary: #f4c542;
+  --primary-foreground: #17130a;
+  --secondary: #202024;
+  --secondary-foreground: #f5f5f6;
+  --muted-foreground: #9a9aa2;
+  --destructive: #e5484d;
+  --destructive-foreground: #f5f5f6;
+  --ring: #f4c542;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-ring: var(--ring);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  /*
+   * Fonte do sistema em vez de next/font/google: zero requisição externa no
+   * build/runtime (mais rápido, mais robusto atrás de proxy/firewall
+   * corporativo) e visualmente quase idêntica à Geist em qualquer SO/celular
+   * moderno.
+   */
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial,
+    sans-serif;
+  /* Evita "pull-to-refresh" acidental durante o treino e permite scroll normal da página */
+  overscroll-behavior-y: none;
+}
