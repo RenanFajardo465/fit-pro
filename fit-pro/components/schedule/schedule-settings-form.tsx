@@ -333,9 +333,9 @@ function RulesSection({
         {rules.map((rule) => (
           <li
             key={rule.id}
-            className="flex items-center justify-between gap-2 rounded-lg bg-secondary/50 px-3 py-2 text-sm"
+            className="flex items-start justify-between gap-2 rounded-lg bg-secondary/50 px-3 py-2 text-sm"
           >
-            <span>{describeRule(rule)}</span>
+            <span className="min-w-0 flex-1 break-words">{describeRule(rule)}</span>
             <button
               type="button"
               onClick={() => onDelete(rule.id)}

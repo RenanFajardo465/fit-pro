@@ -59,9 +59,9 @@ export default async function AtividadesPage() {
       <ul className="flex flex-col gap-2">
         {activities?.map((a) => (
           <li key={a.id}>
-            <Card className="flex items-center justify-between gap-3">
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium">{a.name}</span>
+            <Card className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="break-words font-medium">{a.name}</span>
                 <span className="text-xs text-muted-foreground">
                   {a.weekday !== null
                     ? `Toda ${WEEKDAY_LABELS[a.weekday as Weekday]}`
