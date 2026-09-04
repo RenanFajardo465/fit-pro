@@ -3,9 +3,9 @@ import { ChevronRight, Dumbbell, ClipboardList, Upload, AlertTriangle } from "lu
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getAppToday, getAppDateOf, getHoursSince } from "@/lib/date/today";
+import { getAppDateOf, getHoursSince, getAppToday } from "@/lib/date/today";
 import { loadRecommendationContext } from "@/lib/workout/load-recommendation-context";
-import { resolveWorkoutForDate } from "@/lib/workout/recommendation";
+import { resolveNextWorkout } from "@/lib/workout/recommendation";
 import { StartSessionButton } from "@/components/workout/start-session-button";
 import { AbandonSessionButton } from "@/components/workout/abandon-session-button";
 
@@ -52,27 +52,8 @@ export default async function TreinoPage() {
   let recommendationReason: string | null = null;
 
   if (!activeSession) {
-    const today = getAppToday();
     const context = await loadRecommendationContext(supabase, user!.id);
-    const { data: manualOverride } = await supabase
-      .from("manual_overrides")
-      .select("template_id")
-      .eq("user_id", user!.id)
-      .eq("date", today.date)
-      .maybeSingle();
-
-    const resolution = resolveWorkoutForDate({
-      date: today.date,
-      weekday: today.weekday,
-      mode: context.mode,
-      templatesInOrder: context.templatesInOrder,
-      sequenceState: context.sequenceState,
-      weekdayAssignments: context.weekdayAssignments,
-      rules: context.rules,
-      activities: context.activities,
-      templateMuscleGroups: context.templateMuscleGroups,
-      manualOverride: manualOverride ?? null,
-    });
+    const resolution = resolveNextWorkout(context.templatesInOrder, context.sequenceState);
 
     recommendedTemplate = resolution.templateId
       ? (context.templatesInOrder.find((t) => t.id === resolution.templateId) ?? null)
@@ -88,7 +69,7 @@ export default async function TreinoPage() {
         <ActiveSessionCard session={activeSession} />
       ) : (
         <Card className="flex flex-col gap-2">
-          <p className="text-sm text-muted-foreground">Treino de hoje</p>
+          <p className="text-sm text-muted-foreground">Próximo treino</p>
           {recommendedTemplate ? (
             <>
               <p className="text-lg font-medium">
@@ -98,7 +79,7 @@ export default async function TreinoPage() {
             </>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {recommendationReason ?? "Descanso hoje — nenhum treino recomendado."}
+              {recommendationReason ?? "Nenhum treino recomendado ainda."}
             </p>
           )}
         </Card>

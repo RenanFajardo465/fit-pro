@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Settings, CalendarDays, Dumbbell } from "lucide-react";
+import { ChevronRight, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,22 +7,10 @@ import { signOut } from "@/lib/actions/auth";
 
 const LINKS = [
   {
-    href: "/calendario",
-    icon: CalendarDays,
-    title: "Calendário",
-    subtitle: "Visão completa navegável do mês",
-  },
-  {
     href: "/configuracoes/recomendacao",
     icon: Settings,
-    title: "Configurações de recomendação",
-    subtitle: "Modo de recomendação, dias da semana e regras",
-  },
-  {
-    href: "/configuracoes/atividades",
-    icon: Dumbbell,
-    title: "Atividades externas",
-    subtitle: "Futebol, muay thai... aparecem no calendário",
+    title: "Sequência de treinos",
+    subtitle: "Ajustar manualmente qual foi o último treino concluído",
   },
 ] as const;
 
