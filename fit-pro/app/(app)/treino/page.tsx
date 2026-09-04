@@ -8,6 +8,7 @@ import { loadRecommendationContext } from "@/lib/workout/load-recommendation-con
 import { resolveNextWorkout } from "@/lib/workout/recommendation";
 import { StartSessionButton } from "@/components/workout/start-session-button";
 import { AbandonSessionButton } from "@/components/workout/abandon-session-button";
+import { ChooseWorkoutButton, type ChooseWorkoutTemplate } from "@/components/workout/choose-workout-button";
 
 const LINKS = [
   {
@@ -50,11 +51,13 @@ export default async function TreinoPage() {
 
   let recommendedTemplate: { id: string; code: string; name: string } | null = null;
   let recommendationReason: string | null = null;
+  let allTemplates: ChooseWorkoutTemplate[] = [];
 
   if (!activeSession) {
     const context = await loadRecommendationContext(supabase, user!.id);
     const resolution = resolveNextWorkout(context.templatesInOrder, context.sequenceState);
 
+    allTemplates = context.templatesInOrder;
     recommendedTemplate = resolution.templateId
       ? (context.templatesInOrder.find((t) => t.id === resolution.templateId) ?? null)
       : null;
@@ -82,6 +85,7 @@ export default async function TreinoPage() {
               {recommendationReason ?? "Nenhum treino recomendado ainda."}
             </p>
           )}
+          <ChooseWorkoutButton templates={allTemplates} excludeId={recommendedTemplate?.id ?? null} />
         </Card>
       )}
 
