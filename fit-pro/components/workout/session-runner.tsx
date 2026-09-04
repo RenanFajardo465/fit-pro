@@ -42,6 +42,9 @@ export type SessionExerciseForRunner = {
   reps_max: number | null;
   duration_target_seconds: number | null;
   distance_target_meters: number | null;
+  /** Carga sugerida no template (Etapa B: referência informativa, nunca preenche o campo sozinha). */
+  initial_load_kg: number | null;
+  /** Última carga REAL registrada pra este exercício (nesta sessão ou numa anterior) — null se nunca feito. */
   general_load_kg: number | null;
   rest_seconds: number;
 };
@@ -607,7 +610,9 @@ function ExerciseCard({
 
   const prescriptionSummary = [
     `${exercise.sets}× ${exercise.reps_min ?? "?"}–${exercise.reps_max ?? "?"}`,
-    exercise.general_load_kg ? `${exercise.general_load_kg} kg` : null,
+    // Referência do template (nunca preenche o campo — Etapa B). A carga
+    // REAL da última vez aparece perto do campo, dentro do SetForm.
+    exercise.initial_load_kg ? `sugestão ${exercise.initial_load_kg} kg` : null,
     exercise.duration_target_seconds ? `${exercise.duration_target_seconds}s` : null,
     exercise.distance_target_meters ? `${exercise.distance_target_meters}m` : null,
     showRestHint && exercise.rest_seconds ? `descanso ${exercise.rest_seconds}s` : null,
@@ -739,6 +744,14 @@ function ExerciseCard({
   );
 }
 
+/**
+ * Etapa B: `exercise.general_load_kg` só existe quando há carga REAL já
+ * registrada (nesta sessão, via `priorWithWeight`, ou numa sessão
+ * anterior, via o valor que `start_workout_session` já trouxe) — nunca é
+ * a carga inicial prescrita no template (`initial_load_kg`, mostrada à
+ * parte como referência). Por isso um exercício inédito naturalmente cai
+ * em `null` aqui, e o campo de carga começa vazio.
+ */
 function getDefaultsForSet(
   exercise: SessionExerciseForRunner,
   exSetsSorted: SessionSetForRunner[],
@@ -818,6 +831,18 @@ function SetForm({
               onChange={(e) => setWeight(e.target.value)}
               placeholder="0"
             />
+            {/* Etapa B: puramente informativo — nunca reescreve `weight`,
+                nem quando o valor de referência muda entre renders (o
+                campo é decidido só pelo próprio estado local acima). */}
+            {defaults.weightKg != null ? (
+              <span className="text-[11px] font-normal normal-case text-muted-foreground">
+                Última vez: {defaults.weightKg}kg
+              </span>
+            ) : exercise.initial_load_kg != null ? (
+              <span className="text-[11px] font-normal normal-case text-muted-foreground">
+                Sugestão do treino: {exercise.initial_load_kg}kg (nunca feito antes)
+              </span>
+            ) : null}
           </label>
         )}
         {usesReps && (

@@ -33,7 +33,7 @@ export default async function SessaoPage(props: PageProps<"/treino/sessao/[sessi
   const { data: exercises } = await supabase
     .from("session_exercises")
     .select(
-      "id, exercise_name, muscle_group, metric_type, order_index, group_type, group_id, sets, reps_min, reps_max, duration_target_seconds, distance_target_meters, general_load_kg, rest_seconds"
+      "id, exercise_name, muscle_group, metric_type, order_index, group_type, group_id, sets, reps_min, reps_max, duration_target_seconds, distance_target_meters, initial_load_kg, general_load_kg, rest_seconds"
     )
     .eq("session_id", sessionId)
     .order("order_index", { ascending: true });
