@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ChevronRight, Apple, ChefHat, CalendarRange } from "lucide-react";
+import { ChevronRight, Apple, ChefHat, CalendarRange, NotebookPen } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const LINKS = [
+  { href: "/nutricao/diario", label: "Diário do dia", icon: NotebookPen },
   { href: "/nutricao/alimentos", label: "Alimentos", icon: Apple },
   { href: "/nutricao/receitas", label: "Receitas", icon: ChefHat },
   { href: "/nutricao/dietas", label: "Dietas", icon: CalendarRange },
@@ -31,8 +32,7 @@ export default function NutricaoPage() {
 
       <Card>
         <p className="text-sm text-muted-foreground">
-          Diário do dia (selecionar uma dieta pra hoje, checklist de consumo e itens extra) chega
-          no próximo incremento da Fase 5.
+          Resumo com meta calórica/proteica chega no próximo incremento da Fase 5.
         </p>
       </Card>
     </div>

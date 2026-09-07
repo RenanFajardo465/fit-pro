@@ -46,3 +46,26 @@ export function getAppDateOf(isoTimestamp: string): string {
 export function getHoursSince(isoTimestamp: string): number {
   return (Date.now() - new Date(isoTimestamp).getTime()) / 3_600_000;
 }
+
+/**
+ * Soma (ou subtrai) dias a uma data "flutuante" YYYY-MM-DD, sem depender de
+ * fuso horário — usada pela navegação dia-a-dia do diário nutricional
+ * (Fase 5, Incremento 4). Construir em UTC evita o bug clássico de "dia
+ * anterior" perto da virada de mês em fusos negativos.
+ */
+export function addDaysToIsoDate(date: string, delta: number): string {
+  const [y, m, d] = date.split("-").map(Number);
+  const next = new Date(Date.UTC(y, m - 1, d + delta));
+  return next.toISOString().slice(0, 10);
+}
+
+/** Formata YYYY-MM-DD como "seg, 17 de ago" (fuso fixo do app, seção acima). */
+export function formatIsoDateShort(date: string): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "UTC",
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(Date.UTC(y, m - 1, d)));
+}

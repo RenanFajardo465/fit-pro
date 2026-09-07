@@ -943,6 +943,249 @@ export type Database = {
           },
         ];
       };
+      diet_days: {
+        Row: {
+          id: string;
+          user_id: string;
+          date: string;
+          diet_template_id: string | null;
+          diet_name: string;
+          diet_type: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          date: string;
+          diet_template_id?: string | null;
+          diet_name: string;
+          diet_type: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          date?: string;
+          diet_template_id?: string | null;
+          diet_name?: string;
+          diet_type?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      diet_day_meals: {
+        Row: {
+          id: string;
+          diet_day_id: string;
+          user_id: string;
+          order_index: number;
+          name: string;
+          meal_time: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          diet_day_id: string;
+          user_id: string;
+          order_index: number;
+          name: string;
+          meal_time?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          diet_day_id?: string;
+          user_id?: string;
+          order_index?: number;
+          name?: string;
+          meal_time?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diet_day_meals_diet_day_id_fkey";
+            columns: ["diet_day_id"];
+            isOneToOne: false;
+            referencedRelation: "diet_days";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      diet_day_items: {
+        Row: {
+          id: string;
+          diet_day_meal_id: string;
+          user_id: string;
+          order_index: number;
+          food_id: string | null;
+          food_name: string;
+          quantity: number;
+          unit: string;
+          grams_equivalent: number;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          notes: string | null;
+          consumed_quantity: number | null;
+          consumed_at: string | null;
+          consumed_calories: number | null;
+          consumed_protein_g: number | null;
+          consumed_carbs_g: number | null;
+          consumed_fat_g: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          diet_day_meal_id: string;
+          user_id: string;
+          order_index: number;
+          food_id?: string | null;
+          food_name: string;
+          quantity: number;
+          unit: string;
+          grams_equivalent: number;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          notes?: string | null;
+          consumed_quantity?: number | null;
+          consumed_at?: string | null;
+          consumed_calories?: number | null;
+          consumed_protein_g?: number | null;
+          consumed_carbs_g?: number | null;
+          consumed_fat_g?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          diet_day_meal_id?: string;
+          user_id?: string;
+          order_index?: number;
+          food_id?: string | null;
+          food_name?: string;
+          quantity?: number;
+          unit?: string;
+          grams_equivalent?: number;
+          calories?: number;
+          protein_g?: number;
+          carbs_g?: number;
+          fat_g?: number;
+          notes?: string | null;
+          consumed_quantity?: number | null;
+          consumed_at?: string | null;
+          consumed_calories?: number | null;
+          consumed_protein_g?: number | null;
+          consumed_carbs_g?: number | null;
+          consumed_fat_g?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diet_day_items_diet_day_meal_id_fkey";
+            columns: ["diet_day_meal_id"];
+            isOneToOne: false;
+            referencedRelation: "diet_day_meals";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diet_day_items_food_id_fkey";
+            columns: ["food_id"];
+            isOneToOne: false;
+            referencedRelation: "foods";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      extra_food_logs: {
+        Row: {
+          id: string;
+          diet_day_id: string;
+          user_id: string;
+          source: string;
+          food_id: string | null;
+          recipe_id: string | null;
+          name: string;
+          quantity: number;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          notes: string | null;
+          logged_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          diet_day_id: string;
+          user_id: string;
+          source: string;
+          food_id?: string | null;
+          recipe_id?: string | null;
+          name: string;
+          quantity?: number;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          notes?: string | null;
+          logged_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          diet_day_id?: string;
+          user_id?: string;
+          source?: string;
+          food_id?: string | null;
+          recipe_id?: string | null;
+          name?: string;
+          quantity?: number;
+          calories?: number;
+          protein_g?: number;
+          carbs_g?: number;
+          fat_g?: number;
+          notes?: string | null;
+          logged_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "extra_food_logs_diet_day_id_fkey";
+            columns: ["diet_day_id"];
+            isOneToOne: false;
+            referencedRelation: "diet_days";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "extra_food_logs_food_id_fkey";
+            columns: ["food_id"];
+            isOneToOne: false;
+            referencedRelation: "foods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "extra_food_logs_recipe_id_fkey";
+            columns: ["recipe_id"];
+            isOneToOne: false;
+            referencedRelation: "recipes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -972,6 +1215,18 @@ export type Database = {
       };
       replace_diet_meals: {
         Args: { p_diet_template_id: string; p_meals: Json };
+        Returns: undefined;
+      };
+      select_diet_for_day: {
+        Args: { p_date: string; p_diet_template_id: string };
+        Returns: string;
+      };
+      set_item_consumption: {
+        Args: { p_item_id: string; p_consumed_quantity: number | null };
+        Returns: undefined;
+      };
+      set_meal_consumption: {
+        Args: { p_diet_day_meal_id: string; p_consumed: boolean };
         Returns: undefined;
       };
     };
