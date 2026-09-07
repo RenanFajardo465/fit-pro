@@ -692,6 +692,111 @@ export type Database = {
         };
         Relationships: [];
       };
+      recipes: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          servings: number;
+          computed_calories: number;
+          computed_protein_g: number;
+          computed_carbs_g: number;
+          computed_fat_g: number;
+          deleted_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          servings?: number;
+          computed_calories?: number;
+          computed_protein_g?: number;
+          computed_carbs_g?: number;
+          computed_fat_g?: number;
+          deleted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          servings?: number;
+          computed_calories?: number;
+          computed_protein_g?: number;
+          computed_carbs_g?: number;
+          computed_fat_g?: number;
+          deleted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      recipe_items: {
+        Row: {
+          id: string;
+          recipe_id: string;
+          user_id: string;
+          order_index: number;
+          food_id: string | null;
+          food_name: string;
+          quantity_servings: number;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          recipe_id: string;
+          user_id: string;
+          order_index: number;
+          food_id?: string | null;
+          food_name: string;
+          quantity_servings: number;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          recipe_id?: string;
+          user_id?: string;
+          order_index?: number;
+          food_id?: string | null;
+          food_name?: string;
+          quantity_servings?: number;
+          calories?: number;
+          protein_g?: number;
+          carbs_g?: number;
+          fat_g?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "recipe_items_recipe_id_fkey";
+            columns: ["recipe_id"];
+            isOneToOne: false;
+            referencedRelation: "recipes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recipe_items_food_id_fkey";
+            columns: ["food_id"];
+            isOneToOne: false;
+            referencedRelation: "foods";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -713,6 +818,10 @@ export type Database = {
       };
       finish_workout_session: {
         Args: { p_session_id: string };
+        Returns: undefined;
+      };
+      replace_recipe_items: {
+        Args: { p_recipe_id: string; p_servings: number; p_items: Json };
         Returns: undefined;
       };
     };

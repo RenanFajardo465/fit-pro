@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ChevronRight, Apple } from "lucide-react";
+import { ChevronRight, Apple, ChefHat } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const LINKS = [
   { href: "/nutricao/alimentos", label: "Alimentos", icon: Apple },
+  { href: "/nutricao/receitas", label: "Receitas", icon: ChefHat },
 ];
 
 export default function NutricaoPage() {
@@ -29,7 +30,7 @@ export default function NutricaoPage() {
 
       <Card>
         <p className="text-sm text-muted-foreground">
-          Receitas, dietas e diário nutricional chegam nos próximos incrementos da Fase 5.
+          Dietas e diário nutricional chegam nos próximos incrementos da Fase 5.
         </p>
       </Card>
     </div>
