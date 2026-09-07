@@ -22,6 +22,7 @@ export type DietTemplateMetaValues = z.infer<typeof dietTemplateMetaSchema>;
  * oficial de dieta (seção 21.1), de propósito.
  */
 export const dietMealItemSchema = z.object({
+  order_index: z.number().int().min(0),
   food_id: z.string().uuid().nullable(),
   food_name: z.string().trim().min(1),
   quantity: z.number().positive("Deve ser maior que zero"),
