@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { Check, CheckCircle2, ChevronDown, ChevronUp, ArrowUp, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { Check, CheckCircle2, ChevronDown, ChevronUp, ArrowUp, Volume2, VolumeX, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   MUSCLE_GROUP_LABELS,
@@ -152,7 +153,10 @@ export function SessionRunner({
 }) {
   const [setsState, setSetsState] = useState(sets);
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
-  const [expandedCompactIds, setExpandedCompactIds] = useState<Set<string>>(new Set());
+  // Etapa D: ids de exercício cujo estado padrão de colapso (concluído
+  // começa fechado, pendente começa aberto) foi invertido por um toque
+  // manual do usuário.
+  const [toggledCollapseIds, setToggledCollapseIds] = useState<Set<string>>(new Set());
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
   const [muted, setMuted] = useState(false);
@@ -178,17 +182,24 @@ export function SessionRunner({
   const [confirmFinish, setConfirmFinish] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
   const [isFinishing, startFinishTransition] = useTransition();
+  // Etapa F: modal que abre sozinha ao concluir a última série pendente do
+  // treino — ver o `if` de transição dentro de handleSaveSet/handleSaveRound.
+  const [showAutoFinishDialog, setShowAutoFinishDialog] = useState(false);
+
+  function doFinish() {
+    setFinishError(null);
+    startFinishTransition(async () => {
+      const result = await finishWorkoutSession(sessionId);
+      if (result && "error" in result) setFinishError(result.error);
+    });
+  }
 
   function handleFinishClick() {
     if (pendingCount > 0 && !confirmFinish) {
       setConfirmFinish(true);
       return;
     }
-    setFinishError(null);
-    startFinishTransition(async () => {
-      const result = await finishWorkoutSession(sessionId);
-      if (result && "error" in result) setFinishError(result.error);
-    });
+    doFinish();
   }
 
   // FAB "ir para exercício atual": aponta pro primeiro bloco ainda não
@@ -209,6 +220,20 @@ export function SessionRunner({
   }, [activeGroupKey]);
   const showFab = Boolean(activeGroupKey) && notIntersecting;
 
+  // Etapa E: âncora visual pro bloco de descanso. `justStartedRestKey` é
+  // setado por `triggerStartRest` assim que uma rodada termina; este
+  // efeito roda depois do React já ter desenhado o `RestTimerCard`
+  // correspondente (o card carrega `id={session-rest-<key>}`), rola até
+  // ele e o mantém destacado por um instante antes de limpar sozinho.
+  const [justStartedRestKey, setJustStartedRestKey] = useState<string | null>(null);
+  useEffect(() => {
+    if (!justStartedRestKey) return;
+    const el = document.getElementById(`session-rest-${justStartedRestKey}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const timeout = setTimeout(() => setJustStartedRestKey(null), 1600);
+    return () => clearTimeout(timeout);
+  }, [justStartedRestKey]);
+
   function scrollToActiveCluster() {
     if (!activeGroupKey) return;
     document.getElementById(`session-cluster-${activeGroupKey}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -228,6 +253,11 @@ export function SessionRunner({
 
     const previous = setsState.find((s) => s.id === setId);
     if (!previous) return;
+
+    // Etapa F: só dispara a modal automática na TRANSIÇÃO pra "tudo
+    // concluído" — reabrir/corrigir uma série de um treino já finalizado
+    // não deve reabrir a modal de novo a cada correção.
+    const wasIncomplete = setsState.some((s) => s.status === "pending");
 
     const nextSets = setsState.map((s) => (s.id === setId ? { ...s, status: "completed" as const, ...values } : s));
     setSetsState(nextSets);
@@ -263,6 +293,86 @@ export function SessionRunner({
     if (roundRestSeconds > 0 && isRoundComplete(clusterExerciseIds, roundNumber, nextSets)) {
       void triggerStartRest(groupKey, roundNumber, roundRestSeconds);
     }
+
+    if (wasIncomplete && nextSets.every((s) => s.status !== "pending")) {
+      setShowAutoFinishDialog(true);
+    }
+  }
+
+  /**
+   * Etapa C: conclusão unificada de uma rodada de bi-set/tri-set/superset —
+   * mesmo formato de `handleSaveSet` (otimista, depois reconcilia com o
+   * resultado real), só que pra vários `session_sets` de uma vez. Uma
+   * falha isolada não desfaz as outras entradas que deram certo — só a(s)
+   * que falhou(aram) volta(m) pro estado anterior, e o descanso da rodada
+   * só dispara se TODAS tiverem sido salvas com sucesso.
+   */
+  async function handleSaveRound(
+    groupKey: string,
+    roundNumber: number,
+    clusterExerciseIds: string[],
+    roundRestSeconds: number,
+    entries: { setId: string; exerciseId: string; values: SetValues }[]
+  ) {
+    ensureAudioContext();
+
+    const previousBySetId = new Map(entries.map((e) => [e.setId, setsState.find((s) => s.id === e.setId)]));
+    const valuesBySetId = new Map(entries.map((e) => [e.setId, e.values]));
+
+    // Etapa F: mesmo raciocínio de handleSaveSet — só dispara na transição.
+    const wasIncomplete = setsState.some((s) => s.status === "pending");
+
+    const nextSets = setsState.map((s) =>
+      valuesBySetId.has(s.id) ? { ...s, status: "completed" as const, ...valuesBySetId.get(s.id)! } : s
+    );
+    setSetsState(nextSets);
+    setSavingIds((prev) => {
+      const next = new Set(prev);
+      entries.forEach((e) => next.add(e.setId));
+      return next;
+    });
+    setErrors((prev) => {
+      const next = new Map(prev);
+      entries.forEach((e) => next.delete(e.setId));
+      return next;
+    });
+
+    const results = await Promise.all(
+      entries.map((e) => completeSet({ setId: e.setId, sessionId, sessionExerciseId: e.exerciseId, ...e.values }))
+    );
+
+    setSavingIds((prev) => {
+      const next = new Set(prev);
+      entries.forEach((e) => next.delete(e.setId));
+      return next;
+    });
+
+    const failedSetIds = new Set<string>();
+    const failedMessages = new Map<string, string>();
+    results.forEach((result, i) => {
+      if (result && "error" in result) {
+        failedSetIds.add(entries[i].setId);
+        failedMessages.set(entries[i].setId, result.error);
+      }
+    });
+
+    if (failedSetIds.size > 0) {
+      setSetsState((prev) => prev.map((s) => (failedSetIds.has(s.id) ? (previousBySetId.get(s.id) ?? s) : s)));
+      setErrors((prev) => {
+        const next = new Map(prev);
+        failedMessages.forEach((msg, id) => next.set(id, msg));
+        return next;
+      });
+      return;
+    }
+
+    if (roundRestSeconds > 0 && isRoundComplete(clusterExerciseIds, roundNumber, nextSets)) {
+      void triggerStartRest(groupKey, roundNumber, roundRestSeconds);
+    }
+
+    if (wasIncomplete && nextSets.every((s) => s.status !== "pending")) {
+      setShowAutoFinishDialog(true);
+    }
   }
 
   async function triggerStartRest(groupKey: string, roundNumber: number, seconds: number) {
@@ -275,6 +385,11 @@ export function SessionRunner({
       next.delete(key);
       return next;
     });
+    // Etapa E: âncora visual — assim que o descanso desta rodada começa, o
+    // efeito abaixo (ligado a este estado) rola a tela até o card do
+    // cronômetro e o destaca por um instante, pra ele ficar em evidência
+    // imediatamente, sem o usuário precisar procurar.
+    setJustStartedRestKey(key);
 
     const result = await startRest({ sessionId, groupKey, roundNumber, seconds });
     // Falha ao persistir não é crítica: o cronômetro local já está rodando
@@ -397,6 +512,21 @@ export function SessionRunner({
           const timerState = timerKey ? restTimers.get(timerKey) : undefined;
           const showTimer = Boolean(timerState) && !dismissedRestKeys.has(timerKey!);
 
+          // Etapa C: num bloco agrupado, os exercícios cuja série da rodada
+          // corrente ainda está pendente entram no `RoundForm` (conclusão
+          // unificada) em vez do `SetForm` individual de cada um.
+          const roundEntries: RoundEntry[] =
+            isGroup && currentRound != null
+              ? cluster.flatMap((exercise) => {
+                  const exSets = setsState
+                    .filter((s) => s.session_exercise_id === exercise.id)
+                    .sort((a, b) => a.set_number - b.set_number);
+                  const currentSet = exSets.find((s) => s.set_number === currentRound && s.status === "pending");
+                  if (!currentSet) return [];
+                  return [{ exercise, set: currentSet, defaults: getDefaultsForSet(exercise, exSets, currentSet) }];
+                })
+              : [];
+
           const block = (
             <div className="flex flex-col gap-2">
               {cluster.map((exercise) => (
@@ -416,9 +546,9 @@ export function SessionRunner({
                   onUndo={handleUndoSet}
                   savingIds={savingIds}
                   errors={errors}
-                  expandedCompact={expandedCompactIds.has(exercise.id)}
-                  onToggleCompact={() =>
-                    setExpandedCompactIds((prev) => {
+                  manuallyToggled={toggledCollapseIds.has(exercise.id)}
+                  onToggleCollapse={() =>
+                    setToggledCollapseIds((prev) => {
                       const next = new Set(prev);
                       if (next.has(exercise.id)) next.delete(exercise.id);
                       else next.add(exercise.id);
@@ -426,8 +556,22 @@ export function SessionRunner({
                     })
                   }
                   showRestHint={!isGroup || exercise.id === cluster[cluster.length - 1].id}
+                  hideCurrentForm={isGroup}
                 />
               ))}
+              {roundEntries.length > 0 && currentRound != null && (
+                <RoundForm
+                  key={restKey(groupKey, currentRound)}
+                  entries={roundEntries}
+                  groupKey={groupKey}
+                  roundNumber={currentRound}
+                  clusterExerciseIds={clusterExerciseIds}
+                  roundRestSeconds={roundRestSeconds}
+                  savingIds={savingIds}
+                  errors={errors}
+                  onSaveRound={handleSaveRound}
+                />
+              )}
             </div>
           );
 
@@ -446,15 +590,24 @@ export function SessionRunner({
               )}
 
               {showTimer && timerState && justFinishedRound != null && (
-                <RestTimerCard
-                  state={timerState}
-                  muted={muted}
-                  onPause={() => handlePauseRest(groupKey, justFinishedRound)}
-                  onResume={() => handleResumeRest(groupKey, justFinishedRound)}
-                  onAdjust={(delta) => handleAdjustRest(groupKey, justFinishedRound, delta)}
-                  onSkip={() => handleSkipRest(groupKey, justFinishedRound)}
-                  onDismiss={() => handleDismissRest(groupKey, justFinishedRound)}
-                />
+                <div
+                  id={`session-rest-${restKey(groupKey, justFinishedRound)}`}
+                  className={cn(
+                    "rounded-2xl transition-shadow duration-500",
+                    justStartedRestKey === restKey(groupKey, justFinishedRound) &&
+                      "ring-4 ring-primary/50 ring-offset-2 ring-offset-background"
+                  )}
+                >
+                  <RestTimerCard
+                    state={timerState}
+                    muted={muted}
+                    onPause={() => handlePauseRest(groupKey, justFinishedRound)}
+                    onResume={() => handleResumeRest(groupKey, justFinishedRound)}
+                    onAdjust={(delta) => handleAdjustRest(groupKey, justFinishedRound, delta)}
+                    onSkip={() => handleSkipRest(groupKey, justFinishedRound)}
+                    onDismiss={() => handleDismissRest(groupKey, justFinishedRound)}
+                  />
+                </div>
               )}
             </div>
           );
@@ -490,6 +643,43 @@ export function SessionRunner({
           Ir para exercício atual
         </button>
       )}
+
+      {/* Etapa F: abre sozinha ao concluir a última série pendente do
+          treino (ver a checagem de transição em handleSaveSet/
+          handleSaveRound) — confirmação oficial de encerramento, distinta
+          do fluxo de "Finalizar treino" com pendências (que usa o toque
+          duplo do botão fixo, sem modal). */}
+      <Dialog open={showAutoFinishDialog} onOpenChange={setShowAutoFinishDialog}>
+        <DialogTitle>Treino concluído! 🎉</DialogTitle>
+        <DialogDescription>
+          Você concluiu a última série. Deseja encerrar oficialmente esta sessão de treino agora?
+        </DialogDescription>
+        {finishError && (
+          <p className="text-sm text-destructive" role="alert">
+            {finishError}
+          </p>
+        )}
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowAutoFinishDialog(false)}
+            disabled={isFinishing}
+          >
+            Continuar revisando
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              setShowAutoFinishDialog(false);
+              doFinish();
+            }}
+            disabled={isFinishing}
+          >
+            {isFinishing ? "Finalizando..." : "Finalizar treino"}
+          </Button>
+        </DialogFooter>
+      </Dialog>
     </div>
   );
 }
@@ -586,9 +776,10 @@ function ExerciseCard({
   onUndo,
   savingIds,
   errors,
-  expandedCompact,
-  onToggleCompact,
+  manuallyToggled,
+  onToggleCollapse,
   showRestHint,
+  hideCurrentForm,
 }: {
   exercise: SessionExerciseForRunner;
   exSetsSorted: SessionSetForRunner[];
@@ -600,13 +791,26 @@ function ExerciseCard({
   onUndo: (setId: string) => void;
   savingIds: Set<string>;
   errors: Map<string, string>;
-  expandedCompact: boolean;
-  onToggleCompact: () => void;
+  /** Etapa D: true se o usuário já tocou pra inverter o estado padrão de
+      colapso deste card (aberto↔fechado) nesta sessão. */
+  manuallyToggled: boolean;
+  onToggleCollapse: () => void;
   showRestHint: boolean;
+  /** Etapa C: true num bloco agrupado — a série corrente é preenchida pelo
+      `RoundForm` (conclusão unificada), não aqui individualmente. */
+  hideCurrentForm: boolean;
 }) {
   const isComplete = exSetsSorted.length > 0 && exSetsSorted.every((s) => s.status !== "pending");
   const hasEditingSet = editingSetId !== null && exSetsSorted.some((s) => s.id === editingSetId);
-  const expanded = !isComplete || hasEditingSet || expandedCompact;
+  // Etapa D: qualquer card pode ser colapsado/expandido manualmente, não só
+  // os concluídos — o padrão continua sendo "concluído começa fechado,
+  // pendente começa aberto" (comportamento de antes), mas um toque em
+  // qualquer estado inverte esse padrão pra aquele exercício. Reabrir uma
+  // série pra editar sempre força aberto, por cima de qualquer colapso.
+  const defaultExpanded = !isComplete;
+  const expanded = hasEditingSet || (manuallyToggled ? !defaultExpanded : defaultExpanded);
+
+  const completedCount = exSetsSorted.filter((s) => s.status !== "pending").length;
 
   const prescriptionSummary = [
     `${exercise.sets}× ${exercise.reps_min ?? "?"}–${exercise.reps_max ?? "?"}`,
@@ -625,15 +829,19 @@ function ExerciseCard({
     return (
       <button
         type="button"
-        onClick={onToggleCompact}
+        onClick={onToggleCollapse}
         className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3 text-left"
       >
         <div className="flex items-center gap-3">
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+          {isComplete ? (
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+          ) : (
+            <Circle className="h-5 w-5 shrink-0 text-muted-foreground" />
+          )}
           <div className="flex flex-col">
             <span className="font-medium">{exercise.exercise_name}</span>
             <span className="text-xs text-muted-foreground">
-              {exercise.sets} séries concluídas
+              {completedCount}/{exercise.sets} séries {isComplete ? "concluídas" : "feitas"}
               {lastCompleted?.weight_kg != null ? ` · última ${lastCompleted.weight_kg}kg` : ""}
               {lastCompleted?.reps != null ? ` × ${lastCompleted.reps}` : ""}
             </span>
@@ -655,10 +863,10 @@ function ExerciseCard({
             {prescriptionSummary}
           </p>
         </div>
-        {isComplete && (
+        {!hasEditingSet && (
           <button
             type="button"
-            onClick={onToggleCompact}
+            onClick={onToggleCollapse}
             className="shrink-0 text-muted-foreground"
             aria-label="Recolher"
           >
@@ -671,6 +879,13 @@ function ExerciseCard({
         {exSetsSorted.map((set) => {
           const isCurrent = set.status === "pending" && set.set_number === currentRound;
           const isEditing = set.id === editingSetId;
+
+          // Etapa C: num bloco agrupado, a série corrente pendente é
+          // preenchida pelo `RoundForm` (renderizado uma vez por rodada,
+          // depois de todos os cards do bloco) — aqui não desenha nada.
+          if (isCurrent && hideCurrentForm) {
+            return null;
+          }
 
           if (set.status === "pending" && !isCurrent) {
             return (
@@ -769,6 +984,119 @@ function getDefaultsForSet(
   };
 }
 
+/**
+ * Referência informativa de carga (Etapa B) — sempre um `<span>` inerte,
+ * nunca ligado ao estado do campo. Compartilhado entre `SetForm` (série
+ * avulsa) e `RoundForm` (Etapa C: conclusão unificada de bi-set/tri-set).
+ */
+function LoadReferenceHint({
+  lastRealWeightKg,
+  initialLoadKg,
+}: {
+  lastRealWeightKg: number | null;
+  initialLoadKg: number | null;
+}) {
+  if (lastRealWeightKg != null) {
+    return (
+      <span className="text-[11px] font-normal normal-case text-muted-foreground">
+        Última vez: {lastRealWeightKg}kg
+      </span>
+    );
+  }
+  if (initialLoadKg != null) {
+    return (
+      <span className="text-[11px] font-normal normal-case text-muted-foreground">
+        Sugestão do treino: {initialLoadKg}kg (nunca feito antes)
+      </span>
+    );
+  }
+  return null;
+}
+
+/**
+ * Campos de uma série (carga/reps/duração/distância), sem estado próprio
+ * nem botão — totalmente controlado por quem usa. Extraído do antigo
+ * `SetForm` na Etapa C pra ser reaproveitado também pelo `RoundForm`
+ * (conclusão unificada de bi-set/tri-set), evitando duplicar a lógica de
+ * quais campos mostrar por `metric_type`.
+ */
+function SetFieldsInputs({
+  exercise,
+  weight,
+  reps,
+  duration,
+  distance,
+  onWeightChange,
+  onRepsChange,
+  onDurationChange,
+  onDistanceChange,
+  loadReference,
+}: {
+  exercise: SessionExerciseForRunner;
+  weight: string;
+  reps: string;
+  duration: string;
+  distance: string;
+  onWeightChange: (value: string) => void;
+  onRepsChange: (value: string) => void;
+  onDurationChange: (value: string) => void;
+  onDistanceChange: (value: string) => void;
+  loadReference?: ReactNode;
+}) {
+  const usesReps = metricUsesReps(exercise.metric_type);
+  const usesLoad = metricUsesLoad(exercise.metric_type);
+  const usesDuration = metricUsesDuration(exercise.metric_type);
+  const usesDistance = metricUsesDistance(exercise.metric_type);
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {usesLoad && (
+        <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted-foreground">
+          Carga (kg)
+          <Input inputMode="decimal" value={weight} onChange={(e) => onWeightChange(e.target.value)} placeholder="0" />
+          {/* Etapa B: puramente informativo — nunca reescreve o campo, nem
+              quando o valor de referência muda entre renders (o campo é
+              decidido só pelo próprio estado de quem chama este componente). */}
+          {loadReference}
+        </label>
+      )}
+      {usesReps && (
+        <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted-foreground">
+          Reps
+          <Input
+            inputMode="numeric"
+            value={reps}
+            onChange={(e) => onRepsChange(e.target.value)}
+            placeholder={exercise.reps_max ? String(exercise.reps_max) : "0"}
+          />
+        </label>
+      )}
+      {usesDuration && (
+        <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted-foreground">
+          Duração (s)
+          <Input
+            inputMode="numeric"
+            value={duration}
+            onChange={(e) => onDurationChange(e.target.value)}
+            placeholder="0"
+          />
+        </label>
+      )}
+      {usesDistance && (
+        <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted-foreground">
+          Distância (m)
+          <Input
+            inputMode="decimal"
+            value={distance}
+            onChange={(e) => onDistanceChange(e.target.value)}
+            placeholder="0"
+          />
+        </label>
+      )}
+    </div>
+  );
+}
+
 function SetForm({
   exercise,
   set,
@@ -821,64 +1149,20 @@ function SetForm({
       )}
     >
       <p className="text-xs font-medium text-muted-foreground">Série {set.set_number}</p>
-      <div className="flex flex-wrap gap-2">
-        {usesLoad && (
-          <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted-foreground">
-            Carga (kg)
-            <Input
-              inputMode="decimal"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              placeholder="0"
-            />
-            {/* Etapa B: puramente informativo — nunca reescreve `weight`,
-                nem quando o valor de referência muda entre renders (o
-                campo é decidido só pelo próprio estado local acima). */}
-            {defaults.weightKg != null ? (
-              <span className="text-[11px] font-normal normal-case text-muted-foreground">
-                Última vez: {defaults.weightKg}kg
-              </span>
-            ) : exercise.initial_load_kg != null ? (
-              <span className="text-[11px] font-normal normal-case text-muted-foreground">
-                Sugestão do treino: {exercise.initial_load_kg}kg (nunca feito antes)
-              </span>
-            ) : null}
-          </label>
-        )}
-        {usesReps && (
-          <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted-foreground">
-            Reps
-            <Input
-              inputMode="numeric"
-              value={reps}
-              onChange={(e) => setReps(e.target.value)}
-              placeholder={exercise.reps_max ? String(exercise.reps_max) : "0"}
-            />
-          </label>
-        )}
-        {usesDuration && (
-          <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted-foreground">
-            Duração (s)
-            <Input
-              inputMode="numeric"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              placeholder="0"
-            />
-          </label>
-        )}
-        {usesDistance && (
-          <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted-foreground">
-            Distância (m)
-            <Input
-              inputMode="decimal"
-              value={distance}
-              onChange={(e) => setDistance(e.target.value)}
-              placeholder="0"
-            />
-          </label>
-        )}
-      </div>
+      <SetFieldsInputs
+        exercise={exercise}
+        weight={weight}
+        reps={reps}
+        duration={duration}
+        distance={distance}
+        onWeightChange={setWeight}
+        onRepsChange={setReps}
+        onDurationChange={setDuration}
+        onDistanceChange={setDistance}
+        loadReference={
+          <LoadReferenceHint lastRealWeightKg={defaults.weightKg} initialLoadKg={exercise.initial_load_kg} />
+        }
+      />
 
       {error && (
         <p className="text-xs text-destructive" role="alert">
@@ -901,6 +1185,146 @@ function SetForm({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+type RoundEntry = {
+  exercise: SessionExerciseForRunner;
+  set: SessionSetForRunner;
+  defaults: SetValues;
+};
+
+type RoundFieldValues = { weight: string; reps: string; duration: string; distance: string };
+
+/**
+ * Etapa C: conclusão unificada de bi-set/tri-set/superset — um único toque
+ * fecha a rodada inteira, em vez de um "Concluir série" por exercício.
+ * Só é usado enquanto a rodada corrente tem mais de 1 exercício ainda
+ * pendente (`entries`); exercícios da mesma rodada já concluídos
+ * individualmente antes continuam aparecendo normalmente no card deles
+ * (reabrir pra corrigir um valor isolado depois continua indo pelo
+ * `SetForm` de sempre — a unificação é só pra fechar a rodada a primeira
+ * vez).
+ */
+function RoundForm({
+  entries,
+  groupKey,
+  roundNumber,
+  clusterExerciseIds,
+  roundRestSeconds,
+  savingIds,
+  errors,
+  onSaveRound,
+}: {
+  entries: RoundEntry[];
+  groupKey: string;
+  roundNumber: number;
+  clusterExerciseIds: string[];
+  roundRestSeconds: number;
+  savingIds: Set<string>;
+  errors: Map<string, string>;
+  onSaveRound: (
+    groupKey: string,
+    roundNumber: number,
+    clusterExerciseIds: string[],
+    roundRestSeconds: number,
+    entries: { setId: string; exerciseId: string; values: SetValues }[]
+  ) => void;
+}) {
+  // key={roundKey(groupKey, roundNumber)} no ponto de uso remonta este form
+  // ao avançar de rodada — seguro inicializar direto dos defaults recebidos,
+  // mesmo raciocínio do SetForm.
+  const [fieldsByExercise, setFieldsByExercise] = useState<Map<string, RoundFieldValues>>(
+    () =>
+      new Map(
+        entries.map((e) => [
+          e.exercise.id,
+          {
+            weight: e.defaults.weightKg?.toString() ?? "",
+            reps: e.defaults.reps?.toString() ?? "",
+            duration: e.defaults.durationSeconds?.toString() ?? "",
+            distance: e.defaults.distanceMeters?.toString() ?? "",
+          },
+        ])
+      )
+  );
+
+  function updateField(exerciseId: string, field: keyof RoundFieldValues, value: string) {
+    setFieldsByExercise((prev) => {
+      const next = new Map(prev);
+      const current = next.get(exerciseId) ?? { weight: "", reps: "", duration: "", distance: "" };
+      next.set(exerciseId, { ...current, [field]: value });
+      return next;
+    });
+  }
+
+  const saving = entries.some((e) => savingIds.has(e.set.id));
+  const combinedError = entries.map((e) => errors.get(e.set.id)).find((msg) => Boolean(msg)) ?? null;
+
+  const allFilled = entries.every((e) => {
+    const fields = fieldsByExercise.get(e.exercise.id);
+    if (!fields) return false;
+    if (metricUsesDuration(e.exercise.metric_type)) return fields.duration.trim() !== "";
+    if (metricUsesReps(e.exercise.metric_type)) return fields.reps.trim() !== "";
+    return true;
+  });
+
+  function handleSubmit() {
+    const payload = entries.map((e) => {
+      const fields = fieldsByExercise.get(e.exercise.id) ?? { weight: "", reps: "", duration: "", distance: "" };
+      return {
+        setId: e.set.id,
+        exerciseId: e.exercise.id,
+        values: {
+          weightKg: metricUsesLoad(e.exercise.metric_type) && fields.weight.trim() !== "" ? Number(fields.weight) : null,
+          reps: metricUsesReps(e.exercise.metric_type) && fields.reps.trim() !== "" ? Number(fields.reps) : null,
+          durationSeconds:
+            metricUsesDuration(e.exercise.metric_type) && fields.duration.trim() !== "" ? Number(fields.duration) : null,
+          distanceMeters:
+            metricUsesDistance(e.exercise.metric_type) && fields.distance.trim() !== "" ? Number(fields.distance) : null,
+        },
+      };
+    });
+    onSaveRound(groupKey, roundNumber, clusterExerciseIds, roundRestSeconds, payload);
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-primary/50 bg-primary/5 p-2.5">
+      <p className="text-xs font-medium text-muted-foreground">Rodada {roundNumber} — conclusão unificada</p>
+
+      {entries.map((e) => {
+        const fields = fieldsByExercise.get(e.exercise.id) ?? { weight: "", reps: "", duration: "", distance: "" };
+        return (
+          <div key={e.exercise.id} className="flex flex-col gap-1.5 rounded-lg bg-card/60 p-2">
+            <p className="text-xs font-medium">{e.exercise.exercise_name}</p>
+            <SetFieldsInputs
+              exercise={e.exercise}
+              weight={fields.weight}
+              reps={fields.reps}
+              duration={fields.duration}
+              distance={fields.distance}
+              onWeightChange={(v) => updateField(e.exercise.id, "weight", v)}
+              onRepsChange={(v) => updateField(e.exercise.id, "reps", v)}
+              onDurationChange={(v) => updateField(e.exercise.id, "duration", v)}
+              onDistanceChange={(v) => updateField(e.exercise.id, "distance", v)}
+              loadReference={
+                <LoadReferenceHint lastRealWeightKg={e.defaults.weightKg} initialLoadKg={e.exercise.initial_load_kg} />
+              }
+            />
+          </div>
+        );
+      })}
+
+      {combinedError && (
+        <p className="text-xs text-destructive" role="alert">
+          {combinedError} — os valores digitados foram mantidos, toque em concluir para tentar de novo.
+        </p>
+      )}
+
+      <Button type="button" onClick={handleSubmit} disabled={saving || !allFilled}>
+        {saving ? "Salvando..." : "Concluir rodada"}
+      </Button>
     </div>
   );
 }

@@ -641,6 +641,57 @@ export type Database = {
           },
         ];
       };
+      foods: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          brand: string | null;
+          serving_quantity: number;
+          serving_unit: string;
+          grams_equivalent: number;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          deleted_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          brand?: string | null;
+          serving_quantity: number;
+          serving_unit: string;
+          grams_equivalent: number;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          deleted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          brand?: string | null;
+          serving_quantity?: number;
+          serving_unit?: string;
+          grams_equivalent?: number;
+          calories?: number;
+          protein_g?: number;
+          carbs_g?: number;
+          fat_g?: number;
+          deleted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
