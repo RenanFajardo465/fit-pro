@@ -35,7 +35,9 @@ export default async function ReceitaEditorPage(props: PageProps<"/nutricao/rece
       .order("order_index", { ascending: true }),
     supabase
       .from("foods")
-      .select("id, name, brand, serving_quantity, serving_unit, calories, protein_g, carbs_g, fat_g")
+      .select(
+        "id, name, brand, serving_quantity, serving_unit, grams_equivalent, calories, protein_g, carbs_g, fat_g"
+      )
       .eq("user_id", user!.id)
       .is("deleted_at", null)
       .order("name", { ascending: true }),

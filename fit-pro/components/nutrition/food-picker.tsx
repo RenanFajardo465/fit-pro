@@ -12,6 +12,7 @@ export type PickableFood = {
   brand: string | null;
   serving_quantity: number;
   serving_unit: string;
+  grams_equivalent: number;
   calories: number;
   protein_g: number;
   carbs_g: number;

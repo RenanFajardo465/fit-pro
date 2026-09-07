@@ -797,6 +797,152 @@ export type Database = {
           },
         ];
       };
+      diet_templates: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          code: string;
+          diet_type: string;
+          deleted_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          code: string;
+          diet_type: string;
+          deleted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          code?: string;
+          diet_type?: string;
+          deleted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      diet_meals: {
+        Row: {
+          id: string;
+          diet_template_id: string;
+          user_id: string;
+          order_index: number;
+          name: string;
+          meal_time: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          diet_template_id: string;
+          user_id: string;
+          order_index: number;
+          name: string;
+          meal_time?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          diet_template_id?: string;
+          user_id?: string;
+          order_index?: number;
+          name?: string;
+          meal_time?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diet_meals_diet_template_id_fkey";
+            columns: ["diet_template_id"];
+            isOneToOne: false;
+            referencedRelation: "diet_templates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      diet_meal_items: {
+        Row: {
+          id: string;
+          diet_meal_id: string;
+          user_id: string;
+          order_index: number;
+          food_id: string | null;
+          food_name: string;
+          quantity: number;
+          unit: string;
+          grams_equivalent: number;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          diet_meal_id: string;
+          user_id: string;
+          order_index: number;
+          food_id?: string | null;
+          food_name: string;
+          quantity: number;
+          unit: string;
+          grams_equivalent: number;
+          calories: number;
+          protein_g: number;
+          carbs_g: number;
+          fat_g: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          diet_meal_id?: string;
+          user_id?: string;
+          order_index?: number;
+          food_id?: string | null;
+          food_name?: string;
+          quantity?: number;
+          unit?: string;
+          grams_equivalent?: number;
+          calories?: number;
+          protein_g?: number;
+          carbs_g?: number;
+          fat_g?: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diet_meal_items_diet_meal_id_fkey";
+            columns: ["diet_meal_id"];
+            isOneToOne: false;
+            referencedRelation: "diet_meals";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diet_meal_items_food_id_fkey";
+            columns: ["food_id"];
+            isOneToOne: false;
+            referencedRelation: "foods";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -822,6 +968,10 @@ export type Database = {
       };
       replace_recipe_items: {
         Args: { p_recipe_id: string; p_servings: number; p_items: Json };
+        Returns: undefined;
+      };
+      replace_diet_meals: {
+        Args: { p_diet_template_id: string; p_meals: Json };
         Returns: undefined;
       };
     };
