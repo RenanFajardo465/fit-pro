@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Apple, ChefHat, CalendarRange, NotebookPen } from "lucide-react";
+import { ChevronRight, Apple, ChefHat, CalendarRange, NotebookPen, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const LINKS = [
@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/nutricao/alimentos", label: "Alimentos", icon: Apple },
   { href: "/nutricao/receitas", label: "Receitas", icon: ChefHat },
   { href: "/nutricao/dietas", label: "Dietas", icon: CalendarRange },
+  { href: "/nutricao/importar", label: "Importar CSV", icon: Upload },
 ];
 
 export default function NutricaoPage() {
@@ -32,7 +33,8 @@ export default function NutricaoPage() {
 
       <Card>
         <p className="text-sm text-muted-foreground">
-          Resumo com meta calórica/proteica chega no próximo incremento da Fase 5.
+          Meta diária de calorias/proteína fica em Mais → Meta nutricional. O resumo aparece no Hoje e no
+          diário do dia.
         </p>
       </Card>
     </div>

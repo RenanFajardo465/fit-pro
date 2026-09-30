@@ -28,18 +28,24 @@ export type Database = {
         Row: {
           id: string;
           display_name: string;
+          daily_calorie_goal: number | null;
+          daily_protein_goal_g: number | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
           display_name: string;
+          daily_calorie_goal?: number | null;
+          daily_protein_goal_g?: number | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           display_name?: string;
+          daily_calorie_goal?: number | null;
+          daily_protein_goal_g?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1186,6 +1192,36 @@ export type Database = {
           },
         ];
       };
+      diet_csv_import_batches: {
+        Row: {
+          id: string;
+          user_id: string;
+          file_name: string | null;
+          diets_count: number;
+          meals_count: number;
+          items_count: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          file_name?: string | null;
+          diets_count?: number;
+          meals_count?: number;
+          items_count?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          file_name?: string | null;
+          diets_count?: number;
+          meals_count?: number;
+          items_count?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1228,6 +1264,10 @@ export type Database = {
       set_meal_consumption: {
         Args: { p_diet_day_meal_id: string; p_consumed: boolean };
         Returns: undefined;
+      };
+      import_diet_csv: {
+        Args: { p_file_name: string; p_diets: Json };
+        Returns: Json;
       };
     };
     Enums: Record<string, never>;

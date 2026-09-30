@@ -11,16 +11,51 @@ export type DaySummaryTotals = {
   consumedFatG: number;
 };
 
-/**
- * "Consumido" já soma os itens da dieta marcados + todos os itens extra —
- * o resumo completo por dia (comparando com uma meta calórica/proteica)
- * fica pro próximo incremento (resumo no Dashboard), quando a meta do
- * usuário existir no perfil. Por enquanto isso só mostra planejado ×
- * consumido do próprio dia.
- */
-export function DaySummaryCard({ totals }: { totals: DaySummaryTotals }) {
+export type NutritionGoals = {
+  dailyCalorieGoal: number | null;
+  dailyProteinGoalG: number | null;
+};
+
+function GoalBar({ label, value, goal, unit }: { label: string; value: number; goal: number; unit: string }) {
+  const pct = Math.round((value / goal) * 100);
+  const barPct = Math.min(pct, 100);
+  const isOver = value > goal;
+
   return (
-    <Card className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className={isOver ? "text-destructive" : "text-muted-foreground"}>
+          {value} / {goal} {unit} ({pct}%)
+        </span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+        <div
+          className={isOver ? "h-full rounded-full bg-destructive" : "h-full rounded-full bg-primary"}
+          style={{ width: `${barPct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "Consumido" já soma os itens da dieta marcados + todos os itens extra.
+ * `goals` é opcional (Fase 5, Incremento 5) — quando o usuário definiu meta
+ * diária em Mais → Meta nutricional, mostra uma barra de progresso
+ * consumido × meta; sem meta definida, mostra só planejado × consumido.
+ */
+export function DaySummaryCard({
+  totals,
+  goals,
+}: {
+  totals: DaySummaryTotals;
+  goals?: NutritionGoals | null;
+}) {
+  const hasGoal = !!(goals && (goals.dailyCalorieGoal || goals.dailyProteinGoalG));
+
+  return (
+    <Card className="flex flex-col gap-3">
       <p className="text-sm font-medium">Resumo do dia</p>
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="flex flex-col gap-0.5">
@@ -38,6 +73,28 @@ export function DaySummaryCard({ totals }: { totals: DaySummaryTotals }) {
           </span>
         </div>
       </div>
+
+      {hasGoal && (
+        <div className="flex flex-col gap-2 border-t border-border pt-3">
+          <span className="text-xs text-muted-foreground">Meta do dia</span>
+          {goals!.dailyCalorieGoal && (
+            <GoalBar
+              label="Calorias"
+              value={totals.consumedCalories}
+              goal={goals!.dailyCalorieGoal}
+              unit="kcal"
+            />
+          )}
+          {goals!.dailyProteinGoalG && (
+            <GoalBar
+              label="Proteína"
+              value={totals.consumedProteinG}
+              goal={goals!.dailyProteinGoalG}
+              unit="g"
+            />
+          )}
+        </div>
+      )}
     </Card>
   );
 }

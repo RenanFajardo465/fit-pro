@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DietDayPicker } from "@/components/nutrition/diet-day-picker";
 import { DietDayMealSection, type DietDayMealForSection } from "@/components/nutrition/diet-day-meal-section";
-import { DaySummaryCard, type DaySummaryTotals } from "@/components/nutrition/day-summary-card";
+import { DaySummaryCard, type DaySummaryTotals, type NutritionGoals } from "@/components/nutrition/day-summary-card";
 import { ExtraFoodLogForm } from "@/components/nutrition/extra-food-log-form";
 import { ExtraLogList } from "@/components/nutrition/extra-log-list";
 import { removeDietDay } from "@/lib/actions/diet-days";
@@ -28,12 +28,24 @@ export default async function DiarioDiaPage(props: PageProps<"/nutricao/diario/[
   const previousDate = addDaysToIsoDate(date, -1);
   const nextDate = addDaysToIsoDate(date, 1);
 
-  const { data: dietDay } = await supabase
-    .from("diet_days")
-    .select("id, diet_name, diet_type")
-    .eq("user_id", user!.id)
-    .eq("date", date)
-    .maybeSingle();
+  const [{ data: dietDay }, { data: profile }] = await Promise.all([
+    supabase
+      .from("diet_days")
+      .select("id, diet_name, diet_type")
+      .eq("user_id", user!.id)
+      .eq("date", date)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("daily_calorie_goal, daily_protein_goal_g")
+      .eq("id", user!.id)
+      .single(),
+  ]);
+
+  const goals: NutritionGoals = {
+    dailyCalorieGoal: profile?.daily_calorie_goal ?? null,
+    dailyProteinGoalG: profile?.daily_protein_goal_g ?? null,
+  };
 
   let mealsForSection: DietDayMealForSection[] = [];
   let totals: DaySummaryTotals = {
@@ -181,7 +193,7 @@ export default async function DiarioDiaPage(props: PageProps<"/nutricao/diario/[
             </form>
           </Card>
 
-          <DaySummaryCard totals={totals} />
+          <DaySummaryCard totals={totals} goals={goals} />
 
           <div className="flex flex-col gap-3">
             {mealsForSection.map((meal) => (

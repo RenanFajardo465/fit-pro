@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Settings } from "lucide-react";
+import { ChevronRight, Settings, Target } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,12 @@ const LINKS = [
     icon: Settings,
     title: "Sequência de treinos",
     subtitle: "Ajustar manualmente qual foi o último treino concluído",
+  },
+  {
+    href: "/configuracoes/nutricao",
+    icon: Target,
+    title: "Meta nutricional",
+    subtitle: "Definir meta diária de calorias e proteína",
   },
 ] as const;
 

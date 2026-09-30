@@ -1,7 +1,11 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { loadRecommendationContext } from "@/lib/workout/load-recommendation-context";
 import { resolveNextWorkout } from "@/lib/workout/recommendation";
+import { getDayTotals } from "@/lib/nutrition/day-totals";
+import { DaySummaryCard, type NutritionGoals } from "@/components/nutrition/day-summary-card";
+import { getAppToday } from "@/lib/date/today";
 
 export default async function HojePage() {
   const supabase = await createClient();
@@ -9,15 +13,25 @@ export default async function HojePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("id", user!.id)
-    .single();
+  const { date: today } = getAppToday();
 
-  const context = await loadRecommendationContext(supabase, user!.id);
+  const [{ data: profile }, context, { dietDay, totals }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name, daily_calorie_goal, daily_protein_goal_g")
+      .eq("id", user!.id)
+      .single(),
+    loadRecommendationContext(supabase, user!.id),
+    getDayTotals(supabase, user!.id, today),
+  ]);
+
   const resolution = resolveNextWorkout(context.templatesInOrder, context.sequenceState);
   const nextTemplate = context.templatesInOrder.find((t) => t.id === resolution.templateId);
+
+  const goals: NutritionGoals = {
+    dailyCalorieGoal: profile?.daily_calorie_goal ?? null,
+    dailyProteinGoalG: profile?.daily_protein_goal_g ?? null,
+  };
 
   return (
     <div className="flex flex-col gap-4 py-2">
@@ -45,9 +59,21 @@ export default async function HojePage() {
         </p>
       </Card>
 
-      <Card>
-        <p className="text-sm text-muted-foreground">Resumo nutricional chega nas próximas entregas.</p>
-      </Card>
+      {dietDay ? (
+        <div className="flex flex-col gap-2">
+          <DaySummaryCard totals={totals} goals={goals} />
+          <Link href="/nutricao/diario" className="text-xs text-muted-foreground underline">
+            Ver diário completo
+          </Link>
+        </div>
+      ) : (
+        <Card className="flex flex-col gap-2">
+          <p className="text-sm text-muted-foreground">Nenhuma dieta selecionada para hoje ainda.</p>
+          <Link href="/nutricao/diario" className="text-xs text-muted-foreground underline">
+            Selecionar dieta do dia
+          </Link>
+        </Card>
+      )}
     </div>
   );
 }
