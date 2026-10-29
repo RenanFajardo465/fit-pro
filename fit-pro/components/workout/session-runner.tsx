@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { Check, CheckCircle2, ChevronDown, ChevronUp, ArrowUp, Volume2, VolumeX, Circle } from "lucide-react";
+import { Check, CheckCircle2, ChevronDown, ChevronUp, ArrowUp, Volume2, VolumeX, Circle, CloudOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useSessionSync } from "@/lib/offline/use-session-sync";
 import {
   MUSCLE_GROUP_LABELS,
   GROUP_TYPE_LABELS,
@@ -25,7 +26,6 @@ import {
   getActiveGroupKey,
   computeRemainingSeconds,
 } from "@/lib/workout/session-rounds";
-import { completeSet, uncompleteSet } from "@/lib/actions/session-sets";
 import { startRest, pauseRest, resumeRest, adjustRest, skipRest } from "@/lib/actions/session-rest";
 import { finishWorkoutSession } from "@/lib/actions/session";
 import { AbandonSessionButton } from "@/components/workout/abandon-session-button";
@@ -162,6 +162,11 @@ export function SessionRunner({
   const [muted, setMuted] = useState(false);
   const [dismissedRestKeys, setDismissedRestKeys] = useState<Set<string>>(new Set());
 
+  // Fase 0, seção 11 (resiliência offline): se a chamada ao servidor falhar
+  // por falta de rede, a mutação é enfileirada e sincronizada sozinha
+  // quando a conexão voltar — ver lib/offline/use-session-sync.ts.
+  const { queueLength, isSyncing, isOnline, safeCompleteSet, safeUncompleteSet } = useSessionSync();
+
   const [restTimers, setRestTimers] = useState<Map<string, RestTimerState>>(() => {
     const map = new Map<string, RestTimerState>();
     for (const r of restRows) {
@@ -268,7 +273,7 @@ export function SessionRunner({
       return next;
     });
 
-    const result = await completeSet({
+    const result = await safeCompleteSet({
       setId,
       sessionId,
       sessionExerciseId: exerciseId,
@@ -338,7 +343,7 @@ export function SessionRunner({
     });
 
     const results = await Promise.all(
-      entries.map((e) => completeSet({ setId: e.setId, sessionId, sessionExerciseId: e.exerciseId, ...e.values }))
+      entries.map((e) => safeCompleteSet({ setId: e.setId, sessionId, sessionExerciseId: e.exerciseId, ...e.values }))
     );
 
     setSavingIds((prev) => {
@@ -419,7 +424,7 @@ export function SessionRunner({
     );
     setSavingIds((prev) => new Set(prev).add(setId));
 
-    const result = await uncompleteSet({ setId, sessionId });
+    const result = await safeUncompleteSet({ setId, sessionId });
 
     setSavingIds((prev) => {
       const next = new Set(prev);
@@ -498,6 +503,21 @@ export function SessionRunner({
           {muted ? "Mudo" : "Som"}
         </button>
       </div>
+
+      {(!isOnline || queueLength > 0) && (
+        <div className="flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
+          {isSyncing ? (
+            <RefreshCw className="h-3.5 w-3.5 shrink-0 animate-spin" />
+          ) : (
+            <CloudOff className="h-3.5 w-3.5 shrink-0" />
+          )}
+          <span>
+            {!isOnline
+              ? "Sem conexão — suas séries continuam sendo salvas aqui e sincronizam sozinhas quando a internet voltar."
+              : `Sincronizando ${queueLength} série(s) pendente(s)...`}
+          </span>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         {clusters.map((cluster) => {

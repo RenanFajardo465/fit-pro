@@ -98,6 +98,29 @@ export async function deleteDietTemplate(id: string) {
 }
 
 /**
+ * Duplica a dieta inteira (RPC `duplicate_diet_template`) — útil pra criar
+ * uma variação de uma dieta existente sem arriscar editar a original.
+ */
+export async function duplicateDietTemplate(id: string): Promise<DietTemplateActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: newId, error } = await supabase.rpc("duplicate_diet_template", {
+    p_diet_template_id: id,
+  });
+
+  if (error) {
+    return { error: `Erro ao duplicar: ${error.message}` };
+  }
+
+  revalidatePath("/nutricao/dietas");
+  redirect(`/nutricao/dietas/${newId}`);
+}
+
+/**
  * Substitui todas as refeições (e itens) de uma dieta de uma vez (Fase 0,
  * seção 11/22 — mesma estratégia transacional de saveTemplateItems /
  * saveRecipeItems). O editor mantém tudo em estado local até o usuário

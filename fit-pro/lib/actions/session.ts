@@ -55,9 +55,10 @@ export async function abandonWorkoutSession(sessionId: string) {
 
 /**
  * Finaliza a sessão em andamento (RPC `finish_workout_session`): séries
- * pendentes viram 'skipped', status vira 'completed'. Cálculos de
- * progresso/volume/PR e a tela de resumo pós-treino chegam no Incremento 4
- * — por enquanto isso só encerra a sessão de forma limpa.
+ * pendentes viram 'skipped', status vira 'completed'. Redireciona pro
+ * resumo pós-treino (duração, volume, PRs) em vez de voltar direto pro
+ * `/treino` — essa tela é quem calcula progresso/volume/PR, lendo os dados
+ * já salvos, sem precisar de nenhuma lógica nova aqui.
  */
 export async function finishWorkoutSession(sessionId: string) {
   const supabase = await createClient();
@@ -74,6 +75,7 @@ export async function finishWorkoutSession(sessionId: string) {
 
   revalidatePath("/treino");
   revalidatePath("/hoje");
+  revalidatePath("/evolucao");
   revalidatePath(`/treino/sessao/${sessionId}`);
-  redirect("/treino");
+  redirect(`/treino/sessao/${sessionId}/resumo`);
 }

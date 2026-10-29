@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DIET_TYPE_LABELS, type DietType } from "@/lib/nutrition/vocabulary";
+import { DuplicateDietButton } from "@/components/nutrition/duplicate-diet-button";
 
 export default async function DietasPage() {
   const supabase = await createClient();
@@ -52,8 +53,8 @@ export default async function DietasPage() {
 
       <ul className="flex flex-col gap-2">
         {diets?.map((diet) => (
-          <li key={diet.id}>
-            <Link href={`/nutricao/dietas/${diet.id}`}>
+          <li key={diet.id} className="flex items-center gap-2">
+            <Link href={`/nutricao/dietas/${diet.id}`} className="flex-1">
               <Card className="flex items-center justify-between gap-3 transition-colors hover:border-primary/50">
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-center text-[10px] font-bold leading-tight text-primary-foreground">
@@ -69,6 +70,7 @@ export default async function DietasPage() {
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
               </Card>
             </Link>
+            <DuplicateDietButton dietId={diet.id} dietName={diet.name} />
           </li>
         ))}
       </ul>

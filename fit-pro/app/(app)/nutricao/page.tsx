@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ChevronRight, Apple, ChefHat, CalendarRange, NotebookPen, Upload } from "lucide-react";
+import { ChevronRight, Apple, ChefHat, CalendarRange, NotebookPen, Upload, History } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const LINKS = [
   { href: "/nutricao/diario", label: "Diário do dia", icon: NotebookPen },
+  { href: "/nutricao/historico", label: "Histórico", icon: History },
   { href: "/nutricao/alimentos", label: "Alimentos", icon: Apple },
   { href: "/nutricao/receitas", label: "Receitas", icon: ChefHat },
   { href: "/nutricao/dietas", label: "Dietas", icon: CalendarRange },

@@ -87,3 +87,77 @@ export async function getDayTotals(
     },
   };
 }
+
+type NutritionHistoryItem = {
+  id: string;
+  date: string;
+  dietName: string;
+  dietType: string;
+  totals: DaySummaryTotals;
+};
+
+/**
+ * Histórico nutricional (Fase 5, Incremento 7): todos os dias com dieta
+ * selecionada, mais recentes primeiro, com planejado × consumido de cada
+ * um — pra não repetir N+1 consultas (uma por dia), busca tudo em 2
+ * consultas (dias+itens, depois extras) e agrega em memória.
+ */
+export async function getNutritionHistory(
+  supabase: SupabaseClient<Database>,
+  userId: string
+): Promise<NutritionHistoryItem[]> {
+  const [{ data: days }, { data: extras }] = await Promise.all([
+    supabase
+      .from("diet_days")
+      .select(
+        "id, date, diet_name, diet_type, diet_day_meals(diet_day_items(calories, protein_g, carbs_g, fat_g, consumed_calories, consumed_protein_g, consumed_carbs_g, consumed_fat_g))"
+      )
+      .eq("user_id", userId)
+      .order("date", { ascending: false }),
+    supabase.from("extra_food_logs").select("diet_day_id, calories, protein_g, carbs_g, fat_g").eq("user_id", userId),
+  ]);
+
+  const extrasByDay = new Map<string, { calories: number; protein_g: number; carbs_g: number; fat_g: number }[]>();
+  for (const e of extras ?? []) {
+    const list = extrasByDay.get(e.diet_day_id) ?? [];
+    list.push(e);
+    extrasByDay.set(e.diet_day_id, list);
+  }
+
+  return (days ?? []).map((day) => {
+    const allItems = (day.diet_day_meals ?? []).flatMap((m) => m.diet_day_items ?? []);
+    const dayExtras = extrasByDay.get(day.id) ?? [];
+
+    const plannedCalories = allItems.reduce((sum, i) => sum + i.calories, 0);
+    const plannedProteinG = allItems.reduce((sum, i) => sum + i.protein_g, 0);
+    const plannedCarbsG = allItems.reduce((sum, i) => sum + i.carbs_g, 0);
+    const plannedFatG = allItems.reduce((sum, i) => sum + i.fat_g, 0);
+
+    const consumedFromItemsCalories = allItems.reduce((sum, i) => sum + (i.consumed_calories ?? 0), 0);
+    const consumedFromItemsProteinG = allItems.reduce((sum, i) => sum + (i.consumed_protein_g ?? 0), 0);
+    const consumedFromItemsCarbsG = allItems.reduce((sum, i) => sum + (i.consumed_carbs_g ?? 0), 0);
+    const consumedFromItemsFatG = allItems.reduce((sum, i) => sum + (i.consumed_fat_g ?? 0), 0);
+
+    const extraCalories = dayExtras.reduce((sum, l) => sum + l.calories, 0);
+    const extraProteinG = dayExtras.reduce((sum, l) => sum + l.protein_g, 0);
+    const extraCarbsG = dayExtras.reduce((sum, l) => sum + l.carbs_g, 0);
+    const extraFatG = dayExtras.reduce((sum, l) => sum + l.fat_g, 0);
+
+    return {
+      id: day.id,
+      date: day.date,
+      dietName: day.diet_name,
+      dietType: day.diet_type,
+      totals: {
+        plannedCalories: round2(plannedCalories),
+        plannedProteinG: round2(plannedProteinG),
+        plannedCarbsG: round2(plannedCarbsG),
+        plannedFatG: round2(plannedFatG),
+        consumedCalories: round2(consumedFromItemsCalories + extraCalories),
+        consumedProteinG: round2(consumedFromItemsProteinG + extraProteinG),
+        consumedCarbsG: round2(consumedFromItemsCarbsG + extraCarbsG),
+        consumedFatG: round2(consumedFromItemsFatG + extraFatG),
+      },
+    };
+  });
+}

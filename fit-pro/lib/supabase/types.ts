@@ -1269,6 +1269,10 @@ export type Database = {
         Args: { p_file_name: string; p_diets: Json };
         Returns: Json;
       };
+      duplicate_diet_template: {
+        Args: { p_diet_template_id: string };
+        Returns: string;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
