@@ -38,7 +38,7 @@ export default async function TemplateEditorPage(
       .order("order_index", { ascending: true }),
     supabase
       .from("exercises")
-      .select("id, name, muscle_group, metric_type")
+      .select("id, name, muscle_group, metric_type, equipment, exercise_aliases(alias)")
       .eq("user_id", user!.id)
       .is("deleted_at", null)
       .order("name", { ascending: true }),

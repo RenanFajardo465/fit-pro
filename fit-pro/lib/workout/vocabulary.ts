@@ -11,8 +11,12 @@ export const MUSCLE_GROUPS = [
   "ombro",
   "biceps",
   "triceps",
+  "antebraco",
+  "quadriceps",
+  "posterior_coxa",
   "perna",
   "gluteo",
+  "panturrilha",
   "abdomen",
   "cardio",
   "corpo_inteiro",
@@ -27,8 +31,15 @@ export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
   ombro: "Ombro",
   biceps: "Bíceps",
   triceps: "Tríceps",
-  perna: "Perna",
+  antebraco: "Antebraço",
+  quadriceps: "Quadríceps",
+  posterior_coxa: "Posterior de coxa",
+  // "perna" fica como opção genérica (exercícios antigos cadastrados assim
+  // continuam válidos) — pra exercício novo, prefira quadriceps/
+  // posterior_coxa/panturrilha, mais específico.
+  perna: "Perna (genérico)",
   gluteo: "Glúteo",
+  panturrilha: "Panturrilha",
   abdomen: "Abdômen",
   cardio: "Cardio",
   corpo_inteiro: "Corpo inteiro",
@@ -68,6 +79,91 @@ export function metricUsesDuration(metricType: string) {
 export function metricUsesDistance(metricType: string) {
   return metricType === "corrida" || metricType === "esteira";
 }
+
+/**
+ * Catálogo Inteligente de Exercícios — atributos novos pra diferenciar
+ * variações reais do mesmo movimento (ex.: "Supino reto com barra" vs.
+ * "Supino reto com halteres" NÃO são o mesmo exercício, mesmo com nome
+ * quase idêntico). Todos nullable no banco — exercícios antigos continuam
+ * válidos sem preenchê-los.
+ */
+export const EQUIPMENT_TYPES = [
+  "barra",
+  "halteres",
+  "maquina",
+  "cabo_polia",
+  "peso_corporal",
+  "kettlebell",
+  "elastico",
+  "smith",
+  "outro",
+] as const;
+export type EquipmentType = (typeof EQUIPMENT_TYPES)[number];
+
+export const EQUIPMENT_TYPE_LABELS: Record<EquipmentType, string> = {
+  barra: "Barra",
+  halteres: "Halteres",
+  maquina: "Máquina",
+  cabo_polia: "Cabo/Polia",
+  peso_corporal: "Peso corporal",
+  kettlebell: "Kettlebell",
+  elastico: "Elástico",
+  smith: "Smith",
+  outro: "Outro",
+};
+
+export const MOVEMENT_PATTERNS = [
+  "empurrar",
+  "puxar",
+  "agachar",
+  "dobradica_quadril",
+  "core",
+  "isolamento",
+  "outro",
+] as const;
+export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
+
+export const MOVEMENT_PATTERN_LABELS: Record<MovementPattern, string> = {
+  empurrar: "Empurrar",
+  puxar: "Puxar",
+  agachar: "Agachar",
+  dobradica_quadril: "Dobradiça de quadril",
+  core: "Core",
+  isolamento: "Isolamento",
+  outro: "Outro",
+};
+
+export const GRIP_TYPES = ["pronada", "supinada", "neutra", "mista", "nao_aplicavel"] as const;
+export type GripType = (typeof GRIP_TYPES)[number];
+
+export const GRIP_TYPE_LABELS: Record<GripType, string> = {
+  pronada: "Pronada",
+  supinada: "Supinada",
+  neutra: "Neutra",
+  mista: "Mista",
+  nao_aplicavel: "Não se aplica",
+};
+
+export const POSITION_VARIANTS = [
+  "reto",
+  "inclinado",
+  "declinado",
+  "sentado",
+  "em_pe",
+  "deitado",
+  "nao_aplicavel",
+] as const;
+export type PositionVariant = (typeof POSITION_VARIANTS)[number];
+
+export const POSITION_VARIANT_LABELS: Record<PositionVariant, string> = {
+  reto: "Reto",
+  inclinado: "Inclinado",
+  declinado: "Declinado",
+  sentado: "Sentado",
+  em_pe: "Em pé",
+  deitado: "Deitado",
+  nao_aplicavel: "Não se aplica",
+};
 
 export const GROUP_TYPES = ["single", "biset", "triset", "superset"] as const;
 export type GroupType = (typeof GROUP_TYPES)[number];

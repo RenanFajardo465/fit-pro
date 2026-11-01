@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, ChevronRight } from "lucide-react";
+import { Plus, ChevronRight, LibraryBig } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -38,6 +38,17 @@ export default async function BibliotecaPage(props: PageProps<"/treino/bibliotec
           Novo
         </Link>
       </div>
+
+      <Link
+        href="/treino/biblioteca/catalogo"
+        className="flex items-center justify-between gap-2 rounded-2xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/50"
+      >
+        <span className="flex items-center gap-2">
+          <LibraryBig className="h-4 w-4" />
+          Importar do catálogo inicial de exercícios
+        </span>
+        <ChevronRight className="h-4 w-4" />
+      </Link>
 
       <ExerciseSearch defaultQuery={q} defaultMuscleGroup={grupo} />
 

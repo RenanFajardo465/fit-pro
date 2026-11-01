@@ -65,6 +65,12 @@ export type Database = {
           video_url: string | null;
           external_url: string | null;
           notes: string | null;
+          equipment: string | null;
+          movement_pattern: string | null;
+          grip_type: string | null;
+          position_variant: string | null;
+          is_unilateral: boolean | null;
+          secondary_muscle_groups: string[] | null;
           deleted_at: string | null;
           created_at: string;
           updated_at: string;
@@ -82,6 +88,12 @@ export type Database = {
           video_url?: string | null;
           external_url?: string | null;
           notes?: string | null;
+          equipment?: string | null;
+          movement_pattern?: string | null;
+          grip_type?: string | null;
+          position_variant?: string | null;
+          is_unilateral?: boolean | null;
+          secondary_muscle_groups?: string[] | null;
           deleted_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -99,11 +111,49 @@ export type Database = {
           video_url?: string | null;
           external_url?: string | null;
           notes?: string | null;
+          equipment?: string | null;
+          movement_pattern?: string | null;
+          grip_type?: string | null;
+          position_variant?: string | null;
+          is_unilateral?: boolean | null;
+          secondary_muscle_groups?: string[] | null;
           deleted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [];
+      };
+      exercise_aliases: {
+        Row: {
+          id: string;
+          exercise_id: string;
+          user_id: string;
+          alias: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          exercise_id: string;
+          user_id: string;
+          alias: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          exercise_id?: string;
+          user_id?: string;
+          alias?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "exercise_aliases_exercise_id_fkey";
+            columns: ["exercise_id"];
+            isOneToOne: false;
+            referencedRelation: "exercises";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       workout_templates: {
         Row: {
@@ -1272,6 +1322,20 @@ export type Database = {
       duplicate_diet_template: {
         Args: { p_diet_template_id: string };
         Returns: string;
+      };
+      replace_exercise_aliases: {
+        Args: { p_exercise_id: string; p_aliases: string[] };
+        Returns: undefined;
+      };
+      find_similar_exercises: {
+        Args: { p_name: string; p_threshold?: number };
+        Returns: {
+          id: string;
+          name: string;
+          muscle_group: string;
+          equipment: string | null;
+          similarity: number;
+        }[];
       };
     };
     Enums: Record<string, never>;
