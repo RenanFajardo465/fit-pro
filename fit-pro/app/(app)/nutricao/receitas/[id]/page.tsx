@@ -6,6 +6,7 @@ import { RecipeMetaForm } from "@/components/nutrition/recipe-meta-form";
 import { RecipeEditor, type RecipeEditorItem } from "@/components/nutrition/recipe-editor";
 import { updateRecipeMeta, deleteRecipe } from "@/lib/actions/recipes";
 import { Button } from "@/components/ui/button";
+import { ConfirmDeleteForm } from "@/components/ui/confirm-delete-form";
 
 export default async function ReceitaEditorPage(props: PageProps<"/nutricao/receitas/[id]">) {
   const { id } = await props.params;
@@ -80,11 +81,14 @@ export default async function ReceitaEditorPage(props: PageProps<"/nutricao/rece
 
       {/* Fica acima do editor (que tem uma barra fixa de "Salvar receita"
           no rodapé) para nunca ficar coberto por ela. */}
-      <form action={deleteRecipe.bind(null, recipe.id)}>
+      <ConfirmDeleteForm
+        action={deleteRecipe.bind(null, recipe.id)}
+        confirmMessage={`Excluir a receita "${recipe.name}"? Todos os itens dela somem da listagem.`}
+      >
         <Button type="submit" variant="outline" size="sm" className="w-full">
           Excluir receita
         </Button>
-      </form>
+      </ConfirmDeleteForm>
 
       <div className="border-t border-border pt-4">
         <RecipeEditor

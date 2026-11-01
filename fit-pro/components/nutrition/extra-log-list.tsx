@@ -20,7 +20,8 @@ export function ExtraLogList({ logs, date }: { logs: ExtraLogForList[]; date: st
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  function remove(id: string) {
+  function remove(id: string, name: string) {
+    if (!window.confirm(`Remover "${name}" do diário? Essa ação não pode ser desfeita.`)) return;
     startTransition(async () => {
       await deleteExtraFoodLog(id, date);
       router.refresh();
@@ -49,7 +50,7 @@ export function ExtraLogList({ logs, date }: { logs: ExtraLogForList[]; date: st
             type="button"
             variant="ghost"
             size="icon"
-            onClick={() => remove(log.id)}
+            onClick={() => remove(log.id, log.name)}
             disabled={isPending}
             aria-label="Remover item extra"
           >

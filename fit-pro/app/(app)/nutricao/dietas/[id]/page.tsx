@@ -6,6 +6,7 @@ import { DietTemplateMetaForm } from "@/components/nutrition/diet-template-meta-
 import { DietEditor, type DietMealEditor } from "@/components/nutrition/diet-editor";
 import { updateDietTemplateMeta, deleteDietTemplate } from "@/lib/actions/diet-templates";
 import { Button } from "@/components/ui/button";
+import { ConfirmDeleteForm } from "@/components/ui/confirm-delete-form";
 import type { DietType } from "@/lib/nutrition/vocabulary";
 
 export default async function DietaEditorPage(props: PageProps<"/nutricao/dietas/[id]">) {
@@ -93,11 +94,14 @@ export default async function DietaEditorPage(props: PageProps<"/nutricao/dietas
 
       {/* Fica acima do editor (que tem uma barra fixa de "Salvar dieta" no
           rodapé) para nunca ficar coberto por ela. */}
-      <form action={deleteDietTemplate.bind(null, diet.id)}>
+      <ConfirmDeleteForm
+        action={deleteDietTemplate.bind(null, diet.id)}
+        confirmMessage={`Excluir a dieta "${diet.name}"? Todas as refeições e itens dela somem da listagem.`}
+      >
         <Button type="submit" variant="outline" size="sm" className="w-full">
           Excluir dieta
         </Button>
-      </form>
+      </ConfirmDeleteForm>
 
       <div className="border-t border-border pt-4">
         <DietEditor dietTemplateId={diet.id} initialMeals={initialMeals} availableFoods={foods ?? []} />

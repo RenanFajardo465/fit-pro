@@ -30,7 +30,7 @@ export default async function SessaoPage(props: PageProps<"/treino/sessao/[sessi
 
   if (!session) notFound();
 
-  const { data: exercises } = await supabase
+  const { data: exercises, error: exercisesError } = await supabase
     .from("session_exercises")
     .select(
       "id, exercise_name, muscle_group, metric_type, order_index, group_type, group_id, sets, reps_min, reps_max, duration_target_seconds, distance_target_meters, initial_load_kg, general_load_kg, rest_seconds"
@@ -38,16 +38,38 @@ export default async function SessaoPage(props: PageProps<"/treino/sessao/[sessi
     .eq("session_id", sessionId)
     .order("order_index", { ascending: true });
 
-  const { data: sets } = await supabase
+  const { data: sets, error: setsError } = await supabase
     .from("session_sets")
     .select("id, session_exercise_id, set_number, status, weight_kg, reps, duration_seconds, distance_meters")
     .in("session_exercise_id", (exercises ?? []).map((e) => e.id))
     .order("set_number", { ascending: true });
 
-  const { data: restRows } = await supabase
+  const { data: restRows, error: restError } = await supabase
     .from("session_group_rest")
     .select("group_key, round_number, rest_ends_at, paused_remaining_seconds")
     .eq("session_id", sessionId);
+
+  // Fase 7: essas 3 consultas alimentam o SessionRunner, que assume que uma
+  // lista vazia significa "sem exercícios" — sem essa checagem, uma falha
+  // transitória de rede/RLS renderizaria o treino como se tivesse sido
+  // zerado, em vez de mostrar que foi um erro de carregamento.
+  const loadError = exercisesError ?? setsError ?? restError;
+  if (loadError) {
+    return (
+      <div className="flex flex-col gap-4 py-2">
+        <Link href="/treino" className="flex items-center gap-1 text-sm text-muted-foreground">
+          <ArrowLeft className="h-4 w-4" />
+          Treino
+        </Link>
+        <Card>
+          <p className="text-sm text-destructive">
+            Não foi possível carregar os dados desse treino agora ({loadError.message}). Seus dados não
+            foram apagados — recarregue a página pra tentar de novo.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 py-2">

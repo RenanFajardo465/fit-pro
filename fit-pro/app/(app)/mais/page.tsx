@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Settings, Target } from "lucide-react";
+import { ChevronRight, Settings, Target, Download } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,6 +17,12 @@ const LINKS = [
     icon: Target,
     title: "Meta nutricional",
     subtitle: "Definir meta diária de calorias e proteína",
+  },
+  {
+    href: "/mais/exportar",
+    icon: Download,
+    title: "Exportar dados",
+    subtitle: "Baixar treinos e nutrição em JSON ou CSV",
   },
 ] as const;
 
@@ -53,7 +59,7 @@ export default async function MaisPage() {
       ))}
 
       <Card>
-        <p className="text-sm text-muted-foreground">Lixeira e exportação chegam nas próximas entregas.</p>
+        <p className="text-sm text-muted-foreground">Lixeira chega numa próxima entrega.</p>
       </Card>
 
       <form action={signOut}>

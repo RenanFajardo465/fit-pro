@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Plus, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ExerciseSearch } from "@/components/workout/exercise-search";
 import { MUSCLE_GROUP_LABELS, type MuscleGroup } from "@/lib/workout/vocabulary";
 
@@ -32,11 +33,9 @@ export default async function BibliotecaPage(props: PageProps<"/treino/bibliotec
     <div className="flex flex-col gap-4 py-2">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Biblioteca</h1>
-        <Link href="/treino/biblioteca/novo">
-          <Button size="sm">
-            <Plus className="h-4 w-4" />
-            Novo
-          </Button>
+        <Link href="/treino/biblioteca/novo" className={cn(buttonVariants({ size: "sm" }))}>
+          <Plus className="h-4 w-4" />
+          Novo
         </Link>
       </div>
 

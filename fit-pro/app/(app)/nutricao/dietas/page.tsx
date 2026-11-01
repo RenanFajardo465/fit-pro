@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Plus, ChevronRight, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { DIET_TYPE_LABELS, type DietType } from "@/lib/nutrition/vocabulary";
 import { DuplicateDietButton } from "@/components/nutrition/duplicate-diet-button";
 
@@ -28,11 +29,9 @@ export default async function DietasPage() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Dietas</h1>
-        <Link href="/nutricao/dietas/novo">
-          <Button size="sm">
-            <Plus className="h-4 w-4" />
-            Nova
-          </Button>
+        <Link href="/nutricao/dietas/novo" className={cn(buttonVariants({ size: "sm" }))}>
+          <Plus className="h-4 w-4" />
+          Nova
         </Link>
       </div>
 

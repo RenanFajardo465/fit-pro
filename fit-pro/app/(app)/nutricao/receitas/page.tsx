@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Plus, ChevronRight, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default async function ReceitasPage() {
   const supabase = await createClient();
@@ -26,11 +27,9 @@ export default async function ReceitasPage() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Receitas</h1>
-        <Link href="/nutricao/receitas/novo">
-          <Button size="sm">
-            <Plus className="h-4 w-4" />
-            Nova
-          </Button>
+        <Link href="/nutricao/receitas/novo" className={cn(buttonVariants({ size: "sm" }))}>
+          <Plus className="h-4 w-4" />
+          Nova
         </Link>
       </div>
 

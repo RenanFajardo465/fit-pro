@@ -15,6 +15,7 @@ export function AbandonSessionButton({
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
+    if (!window.confirm("Abandonar o treino em andamento? O progresso feito até aqui fica salvo, mas a sessão não conta como concluída.")) return;
     setError(null);
     startTransition(async () => {
       const result = await abandonWorkoutSession(sessionId);

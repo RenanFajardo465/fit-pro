@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { DietDayPicker } from "@/components/nutrition/diet-day-picker";
 import { DietDayMealSection, type DietDayMealForSection } from "@/components/nutrition/diet-day-meal-section";
 import { DaySummaryCard, type DaySummaryTotals, type NutritionGoals } from "@/components/nutrition/day-summary-card";
@@ -146,10 +147,12 @@ export default async function DiarioDiaPage(props: PageProps<"/nutricao/diario/[
       </Link>
 
       <div className="flex items-center justify-between gap-2">
-        <Link href={`/nutricao/diario/${previousDate}`} aria-label="Dia anterior">
-          <Button type="button" variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+        <Link
+          href={`/nutricao/diario/${previousDate}`}
+          aria-label="Dia anterior"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+        >
+          <ArrowLeft className="h-4 w-4" />
         </Link>
 
         <div className="flex flex-col items-center">
@@ -161,10 +164,12 @@ export default async function DiarioDiaPage(props: PageProps<"/nutricao/diario/[
           )}
         </div>
 
-        <Link href={`/nutricao/diario/${nextDate}`} aria-label="Próximo dia">
-          <Button type="button" variant="ghost" size="icon">
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+        <Link
+          href={`/nutricao/diario/${nextDate}`}
+          aria-label="Próximo dia"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+        >
+          <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
 

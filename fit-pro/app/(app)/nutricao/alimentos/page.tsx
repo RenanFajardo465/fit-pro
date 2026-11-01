@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Plus, ChevronRight, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { FoodSearch } from "@/components/nutrition/food-search";
 import { FOOD_UNIT_LABELS, type FoodUnit } from "@/lib/nutrition/vocabulary";
 
@@ -35,11 +36,9 @@ export default async function AlimentosPage(props: PageProps<"/nutricao/alimento
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Alimentos</h1>
-        <Link href="/nutricao/alimentos/novo">
-          <Button size="sm">
-            <Plus className="h-4 w-4" />
-            Novo
-          </Button>
+        <Link href="/nutricao/alimentos/novo" className={cn(buttonVariants({ size: "sm" }))}>
+          <Plus className="h-4 w-4" />
+          Novo
         </Link>
       </div>
 

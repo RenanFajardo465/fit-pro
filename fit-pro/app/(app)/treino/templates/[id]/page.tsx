@@ -6,6 +6,7 @@ import { TemplateMetaForm } from "@/components/workout/template-meta-form";
 import { TemplateEditor, type EditorItem } from "@/components/workout/template-editor";
 import { updateTemplateMeta, deleteTemplate } from "@/lib/actions/templates";
 import { Button } from "@/components/ui/button";
+import { ConfirmDeleteForm } from "@/components/ui/confirm-delete-form";
 
 export default async function TemplateEditorPage(
   props: PageProps<"/treino/templates/[id]">
@@ -81,11 +82,14 @@ export default async function TemplateEditorPage(
 
       {/* Fica acima do editor (que tem uma barra fixa de "Salvar alterações"
           no rodapé) para nunca ficar coberto por ela. */}
-      <form action={deleteTemplate.bind(null, template.id)}>
+      <ConfirmDeleteForm
+        action={deleteTemplate.bind(null, template.id)}
+        confirmMessage={`Excluir o template "${template.name}"? Todos os exercícios dele somem da listagem.`}
+      >
         <Button type="submit" variant="outline" size="sm" className="w-full">
           Excluir template
         </Button>
-      </form>
+      </ConfirmDeleteForm>
 
       <div className="border-t border-border pt-4">
         <TemplateEditor
