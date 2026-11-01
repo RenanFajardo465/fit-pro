@@ -770,8 +770,8 @@ function RestTimerCard({
           <Button type="button" variant="outline" size="sm" onClick={() => onAdjust(15)}>
             +15s
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => onAdjust(30)}>
-            +30s
+          <Button type="button" variant="outline" size="sm" onClick={() => onAdjust(-15)}>
+            -15s
           </Button>
           <Button type="button" variant="outline" size="sm" className="flex-1" onClick={isRunning ? onPause : onResume}>
             {isRunning ? "Pausar" : "Retomar"}
