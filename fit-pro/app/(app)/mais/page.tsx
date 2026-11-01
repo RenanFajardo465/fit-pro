@@ -3,6 +3,7 @@ import { ChevronRight, Settings, Target, Download } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { signOut } from "@/lib/actions/auth";
 
 const LINKS = [
@@ -40,6 +41,8 @@ export default async function MaisPage() {
         <p className="text-sm text-muted-foreground">Logado como</p>
         <p className="font-medium">{user?.email}</p>
       </Card>
+
+      <ThemeToggle />
 
       {LINKS.map(({ href, icon: Icon, title, subtitle }) => (
         <Link key={href} href={href}>

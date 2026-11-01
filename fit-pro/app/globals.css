@@ -1,34 +1,39 @@
 @import "tailwindcss";
 
 /*
- * Fit-Pro é predominantemente dark mode (Fase 0, item 73/22). Não há troca
- * light/dark no MVP — o tema é fixo, mas a variante `dark:` do Tailwind v4
- * fica disponível (baseada na classe `.dark` no <html>) para o dia em que
- * quisermos oferecer um tema claro sem reescrever nada.
+ * Fit-Pro nasceu dark mode (Fase 0, item 73/22) e continua sendo o tema
+ * padrão/definido do app — quem nunca escolheu nada vê exatamente o visual
+ * de sempre. O light mode é uma opção adicional, trocável a qualquer
+ * momento em Mais → Aparência (`components/theme/theme-toggle.tsx`), que só
+ * alterna a classe `.dark` na tag <html> e guarda a preferência no
+ * `localStorage` do navegador — nenhum componente precisou ser reescrito,
+ * só os valores abaixo.
  */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Light mode — valores padrão (sem a classe `.dark`). */
 :root {
-  --background: #0b0b0d;
-  --foreground: #f5f5f6;
-  --card: #17171a;
-  --border: #27272b;
-  --primary: #f4c542; /* amarelo/dourado — energia, alto contraste em dark mode */
+  --background: #f7f7f8;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --border: #e4e4e7;
+  --primary: #e0ad1f; /* mesmo tom dourado, um pouco mais escuro pra manter contraste em fundo claro */
   --primary-foreground: #17130a;
-  --secondary: #202024;
-  --secondary-foreground: #f5f5f6;
-  --muted-foreground: #9a9aa2;
-  --destructive: #e5484d;
+  --secondary: #efeff1;
+  --secondary-foreground: #18181b;
+  --muted-foreground: #71717a;
+  --destructive: #d7373f;
   --destructive-foreground: #f5f5f6;
-  --ring: #f4c542;
+  --ring: #e0ad1f;
 }
 
+/* Dark mode — tema padrão do Fit-Pro, aplicado via classe `.dark` no <html>. */
 .dark {
   --background: #0b0b0d;
   --foreground: #f5f5f6;
   --card: #17171a;
   --border: #27272b;
-  --primary: #f4c542;
+  --primary: #f4c542; /* amarelo/dourado — energia, alto contraste em dark mode */
   --primary-foreground: #17130a;
   --secondary: #202024;
   --secondary-foreground: #f5f5f6;

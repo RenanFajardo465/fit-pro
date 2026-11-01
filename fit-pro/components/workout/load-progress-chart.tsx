@@ -49,20 +49,25 @@ export function LoadProgressChart({
         <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-              <CartesianGrid vertical={false} stroke="#27272b" />
-              <XAxis dataKey="label" tick={{ fill: "#9a9aa2", fontSize: 11 }} tickLine={false} axisLine={{ stroke: "#27272b" }} />
-              <YAxis tick={{ fill: "#9a9aa2", fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
+              <CartesianGrid vertical={false} stroke="var(--border)" />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+                tickLine={false}
+                axisLine={{ stroke: "var(--border)" }}
+              />
+              <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
               <Tooltip
-                contentStyle={{ background: "#17171a", border: "1px solid #27272b", borderRadius: 12, fontSize: 12 }}
-                labelStyle={{ color: "#f5f5f6" }}
+                contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }}
+                labelStyle={{ color: "var(--foreground)" }}
                 formatter={(value) => [`${value}kg`, "Carga máxima"]}
               />
               <Line
                 type="monotone"
                 dataKey="maxWeightKg"
-                stroke="#f4c542"
+                stroke="var(--primary)"
                 strokeWidth={2}
-                dot={{ fill: "#f4c542", r: 3 }}
+                dot={{ fill: "var(--primary)", r: 3 }}
               />
             </LineChart>
           </ResponsiveContainer>

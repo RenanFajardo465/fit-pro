@@ -22,15 +22,20 @@ export function VolumeChart({ data }: { data: WeeklyVolumePoint[] }) {
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-          <CartesianGrid vertical={false} stroke="#27272b" />
-          <XAxis dataKey="label" tick={{ fill: "#9a9aa2", fontSize: 11 }} tickLine={false} axisLine={{ stroke: "#27272b" }} />
-          <YAxis tick={{ fill: "#9a9aa2", fontSize: 11 }} tickLine={false} axisLine={false} width={48} />
+          <CartesianGrid vertical={false} stroke="var(--border)" />
+          <XAxis
+            dataKey="label"
+            tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+            tickLine={false}
+            axisLine={{ stroke: "var(--border)" }}
+          />
+          <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickLine={false} axisLine={false} width={48} />
           <Tooltip
-            contentStyle={{ background: "#17171a", border: "1px solid #27272b", borderRadius: 12, fontSize: 12 }}
-            labelStyle={{ color: "#f5f5f6" }}
+            contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }}
+            labelStyle={{ color: "var(--foreground)" }}
             formatter={(value) => [`${value}kg`, "Volume"]}
           />
-          <Bar dataKey="volumeKg" fill="#f4c542" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="volumeKg" fill="var(--primary)" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
