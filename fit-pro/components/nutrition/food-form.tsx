@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { FoodExternalSearch, type ExternalFoodMatch } from "@/components/nutrition/food-external-search";
 import type { FoodActionResult } from "@/lib/actions/foods";
 
 export function FoodForm({
@@ -29,6 +30,7 @@ export function FoodForm({
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FoodFormValues>({
     resolver: zodResolver(foodSchema),
@@ -46,6 +48,21 @@ export function FoodForm({
     },
   });
 
+  function applyExternalMatch(match: ExternalFoodMatch) {
+    setValue("name", match.name, { shouldValidate: true });
+    if (match.brand) setValue("brand", match.brand);
+    // TACO e Open Food Facts só dão valor confiável por 100g — usamos
+    // 100g como porção de referência pra não inventar conversão nenhuma;
+    // o usuário troca pra porção real da embalagem se quiser.
+    setValue("serving_quantity", 100, { shouldValidate: true });
+    setValue("serving_unit", "g", { shouldValidate: true });
+    setValue("grams_equivalent", 100, { shouldValidate: true });
+    if (match.caloriesPer100g != null) setValue("calories", match.caloriesPer100g, { shouldValidate: true });
+    if (match.proteinGPer100g != null) setValue("protein_g", match.proteinGPer100g, { shouldValidate: true });
+    if (match.carbsGPer100g != null) setValue("carbs_g", match.carbsGPer100g, { shouldValidate: true });
+    if (match.fatGPer100g != null) setValue("fat_g", match.fatGPer100g, { shouldValidate: true });
+  }
+
   function submit(values: FoodFormValues) {
     setServerError(null);
     startTransition(async () => {
@@ -61,6 +78,8 @@ export function FoodForm({
 
   return (
     <form onSubmit={handleSubmit(submit)} className="flex flex-col gap-5 pb-8">
+      <FoodExternalSearch onSelect={applyExternalMatch} />
+
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="name">Nome do alimento</Label>
         <Input id="name" autoComplete="off" {...register("name")} />
